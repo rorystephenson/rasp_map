@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
 import { DivIcon } from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
@@ -35,11 +35,50 @@ interface UserLocation {
   lng: number;
 }
 
+interface MapViewState {
+  center: [number, number];
+  zoom: number;
+}
+
+const MAP_STATE_KEY = 'map_view_state';
+const DEFAULT_MAP_STATE: MapViewState = {
+  center: [42.5, 12.5], // Center on Italy
+  zoom: 6
+};
+
+// Helper functions for map state persistence
+const saveMapState = (state: MapViewState): void => {
+  try {
+    localStorage.setItem(MAP_STATE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.warn('Failed to save map state:', error);
+  }
+};
+
+const loadMapState = (): MapViewState => {
+  try {
+    const saved = localStorage.getItem(MAP_STATE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Validate the loaded state
+      if (parsed.center && Array.isArray(parsed.center) && 
+          parsed.center.length === 2 && 
+          typeof parsed.zoom === 'number') {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to load map state:', error);
+  }
+  return DEFAULT_MAP_STATE;
+};
+
 // Component to handle map interactions
 const MapController: React.FC<{ 
   userLocation: UserLocation | null;
   onZoomChange: (zoom: number) => void;
-}> = ({ userLocation, onZoomChange }) => {
+  onMapStateChange: (state: MapViewState) => void;
+}> = ({ userLocation, onZoomChange, onMapStateChange }) => {
   const map = useMap();
   
   useEffect(() => {
@@ -49,17 +88,27 @@ const MapController: React.FC<{
   }, [map, userLocation]);
 
   useEffect(() => {
-    const handleZoom = () => {
-      onZoomChange(map.getZoom());
+    const handleMapChange = () => {
+      const zoom = map.getZoom();
+      const center = map.getCenter();
+      const newState: MapViewState = {
+        center: [center.lat, center.lng],
+        zoom: zoom
+      };
+      
+      onZoomChange(zoom);
+      onMapStateChange(newState);
     };
 
-    map.on('zoomend', handleZoom);
-    handleZoom(); // Set initial zoom
+    map.on('zoomend', handleMapChange);
+    map.on('moveend', handleMapChange);
+    handleMapChange(); // Set initial state
 
     return () => {
-      map.off('zoomend', handleZoom);
+      map.off('zoomend', handleMapChange);
+      map.off('moveend', handleMapChange);
     };
-  }, [map, onZoomChange]);
+  }, [map, onZoomChange, onMapStateChange]);
   
   return null;
 };
@@ -72,6 +121,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [currentZoom, setCurrentZoom] = useState(6);
+  const [mapState, setMapState] = useState<MapViewState>(() => loadMapState());
 
   useEffect(() => {
     const loadForecastLocations = async () => {
@@ -96,6 +146,15 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
 
     loadForecastLocations();
   }, [onLogout]);
+
+  const handleMapStateChange = useCallback((newState: MapViewState) => {
+    setMapState(newState);
+    saveMapState(newState);
+  }, []);
+
+  const handleZoomChange = useCallback((zoom: number) => {
+    setCurrentZoom(zoom);
+  }, []);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -176,14 +235,6 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
         <h1>Paragliding Forecast Locations</h1>
         <div className="map-controls">
           <span>{allLocations.length} locations</span>
-          <button 
-            onClick={getCurrentLocation}
-            disabled={isLocating}
-            className="location-button"
-            title="Go to my location"
-          >
-            {isLocating ? '📍...' : '📍'}
-          </button>
           <button onClick={onLogout} className="logout-button">
             Sign Out
           </button>
@@ -197,14 +248,37 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
       )}
       
       <div className="map-container">
+        {/* Floating location control */}
+        <div className="map-location-control">
+          <button 
+            onClick={getCurrentLocation}
+            disabled={isLocating}
+            className="location-control-button"
+            title="Go to my location"
+          >
+            <svg 
+              width="18" 
+              height="18" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              className={isLocating ? "location-icon-loading" : "location-icon"}
+            >
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+
         <MapContainer
-          center={[42.5, 12.5]} // Center on Italy
-          zoom={6}
+          center={mapState.center}
+          zoom={mapState.zoom}
           style={{ height: '100%', width: '100%' }}
         >
           <MapController 
             userLocation={userLocation} 
-            onZoomChange={setCurrentZoom}
+            onZoomChange={handleZoomChange}
+            onMapStateChange={handleMapStateChange}
           />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -225,6 +299,11 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
           
           <MarkerClusterGroup
             chunkedLoading
+            animate={false}
+            animateAddingMarkers={false}
+            disableClusteringAtZoom={15}
+            maxClusterRadius={50}
+            spiderfyOnMaxZoom={false}
             iconCreateFunction={(cluster: any) => {
               return new DivIcon({
                 html: `<div class="cluster-icon">
@@ -242,16 +321,14 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
                 position={[parseFloat(location.coord.lat), parseFloat(location.coord.lng)]}
                 icon={windsockIcon}
               >
-                {currentZoom >= 10 && (
-                  <Tooltip
-                    permanent
-                    direction="top"
-                    offset={[0, -20]}
-                    className="location-name-tooltip"
-                  >
-                    {location.windgram_name}
-                  </Tooltip>
-                )}
+                <Tooltip
+                  permanent
+                  direction="top"
+                  offset={[0, -20]}
+                  className={`location-name-tooltip ${currentZoom >= 10 ? 'tooltip-visible' : 'tooltip-hidden'}`}
+                >
+                  {location.windgram_name}
+                </Tooltip>
                 <Popup>
                   <div className="location-popup">
                     <strong>{location.windgram_name}</strong>

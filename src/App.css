@@ -152,37 +152,50 @@
   background: #c82333;
 }
 
-.location-button {
-  padding: 0.5rem 0.75rem;
-  background: #28a745;
-  color: white;
+/* Google Maps style floating location control */
+.map-location-control {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.location-control-button {
+  width: 40px;
+  height: 40px;
+  background: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.2s;
-  min-width: 44px;
-  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  color: #5f6368;
 }
 
-.location-button:hover:not(:disabled) {
-  background: #218838;
-  transform: scale(1.05);
+.location-control-button:hover:not(:disabled) {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  background: #f8f9fa;
 }
 
-.location-button:disabled {
-  background: #6c757d;
+.location-control-button:disabled {
   cursor: not-allowed;
-  animation: pulse 1.5s infinite;
+  color: #9aa0a6;
 }
 
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
+.location-icon {
+  transition: transform 0.2s ease;
+}
+
+.location-icon-loading {
+  animation: locationSpin 1s linear infinite;
+}
+
+@keyframes locationSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .location-error {
@@ -249,12 +262,12 @@
   font-weight: bold;
   color: white;
   font-size: 14px;
-  transition: all 0.2s ease;
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
 .cluster-icon:hover {
   background: #5a6fd8;
-  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Different cluster sizes based on count */
@@ -296,14 +309,13 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  transition: all 0.2s ease;
   z-index: 1;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .windsock-marker:hover .windsock-highlight {
   background: rgba(255, 255, 255, 0.6);
   border-color: rgba(255, 255, 255, 0.8);
-  transform: translate(-50%, -50%) scale(1.1);
 }
 
 .windsock-icon {
@@ -344,6 +356,15 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
   pointer-events: none !important;
   z-index: 1000 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.location-name-tooltip.tooltip-visible {
+  opacity: 1 !important;
+}
+
+.location-name-tooltip.tooltip-hidden {
+  opacity: 0 !important;
 }
 
 .location-name-tooltip::before {
