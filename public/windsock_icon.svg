@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Pole -->
+  <line x1="6" y1="4" x2="6" y2="28" stroke="#555" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- Pole base -->
+  <rect x="3.5" y="27" width="5" height="2" fill="#555" rx="0.5"/>
+  
+  <!-- Windsock segments -->
+  <!-- First segment - RED -->
+  <path d="M 6 4.5 Q 9 3.5 12 4.5 L 12 11.5 Q 9 12.5 6 11.5 Z" fill="#E63946" stroke="#4A4A4A" stroke-width="1"/>
+  
+  <!-- Second segment - WHITE -->
+  <path d="M 12 4.5 Q 15 4.5 18 5 L 18 11 Q 15 11.5 12 11.5 Z" fill="#FFFFFF" stroke="#4A4A4A" stroke-width="1"/>
+  
+  <!-- Third segment - RED -->
+  <path d="M 18 5 Q 21 5.5 24 6 L 24 10 Q 21 10.5 18 11 Z" fill="#E63946" stroke="#4A4A4A" stroke-width="1"/>
+  
+  <!-- Fourth segment - WHITE -->
+  <path d="M 24 6 Q 26 6.5 27 7 L 27 9 Q 26 9.5 24 10 Z" fill="#FFFFFF" stroke="#4A4A4A" stroke-width="1"/>
+  
+  <!-- Mounting bracket -->
+  <circle cx="6" cy="8" r="1.8" fill="#666" stroke="#444" stroke-width="0.6"/>
+</svg>
