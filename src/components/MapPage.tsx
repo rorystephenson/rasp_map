@@ -126,8 +126,15 @@ const MapController: React.FC<{
   onMapStateChange: (state: MapViewState) => void;
   onLocationRequest: () => void;
   isLocating: boolean;
-}> = ({ userLocation, onZoomChange, onMapStateChange, onLocationRequest, isLocating }) => {
+  onMapReady?: (map: any) => void;
+}> = ({ userLocation, onZoomChange, onMapStateChange, onLocationRequest, isLocating, onMapReady }) => {
   const map = useMap();
+  
+  useEffect(() => {
+    if (onMapReady) {
+      onMapReady(map);
+    }
+  }, [map, onMapReady]);
   
   useEffect(() => {
     if (userLocation) {
@@ -184,6 +191,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [selectedLocation, setSelectedLocation] = useState<ForecastLocation | null>(null);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [mapInstance, setMapInstance] = useState<any>(null);
 
   useEffect(() => {
     const loadForecastLocations = async () => {
@@ -221,6 +229,17 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   }, []);
 
   const handleSearchLocationSelect = useCallback((location: ForecastLocation) => {
+    // Animate map to location (main tap behavior)
+    if (mapInstance) {
+      const lat = parseFloat(location.coord.lat);
+      const lng = parseFloat(location.coord.lng);
+      mapInstance.setView([lat, lng], 12, { animate: true, duration: 1 });
+    }
+    // Don't open forecast overlay for main tap, just animate map
+  }, [mapInstance]);
+
+  const handleSearchLocationView = useCallback((location: ForecastLocation) => {
+    // Open forecast overlay but keep search open (eye icon tap)
     setSelectedLocation(location);
     setIsOverlayOpen(true);
   }, []);
@@ -236,6 +255,10 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
 
   const handleCloseSearch = useCallback(() => {
     setIsSearchOpen(false);
+  }, []);
+
+  const handleMapReady = useCallback((map: any) => {
+    setMapInstance(map);
   }, []);
 
   const getCurrentLocation = useCallback(() => {
@@ -368,6 +391,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
             onMapStateChange={handleMapStateChange}
             onLocationRequest={getCurrentLocation}
             isLocating={isLocating}
+            onMapReady={handleMapReady}
           />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -426,6 +450,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
         onClose={handleCloseSearch}
         regions={regions}
         onLocationSelect={handleSearchLocationSelect}
+        onLocationView={handleSearchLocationView}
       />
     </div>
   );

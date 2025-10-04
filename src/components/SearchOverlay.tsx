@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ForecastLocation, ForecastRegion } from '../api/types';
-import { SearchService, SearchResult } from '../services/SearchService';
+import { SearchService, SearchResult, LocationWithRegion } from '../services/SearchService';
 
 interface SearchOverlayProps {
   isOpen: boolean;
   onClose: () => void;
   regions: ForecastRegion[];
   onLocationSelect: (location: ForecastLocation) => void;
+  onLocationView: (location: ForecastLocation) => void;
 }
 
 export const SearchOverlay: React.FC<SearchOverlayProps> = ({ 
   isOpen, 
   onClose, 
   regions, 
-  onLocationSelect 
+  onLocationSelect,
+  onLocationView
 }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -44,10 +46,19 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
     }
   }, [query, searchService]);
 
-  const handleLocationClick = (location: ForecastLocation) => {
-    onLocationSelect(location);
+  const handleLocationClick = (location: LocationWithRegion) => {
+    // Convert to ForecastLocation by removing region_name
+    const { region_name, ...forecastLocation } = location;
+    onLocationSelect(forecastLocation);
     onClose();
     setQuery(''); // Clear search
+  };
+
+  const handleLocationView = (location: LocationWithRegion) => {
+    // Convert to ForecastLocation by removing region_name
+    const { region_name, ...forecastLocation } = location;
+    onLocationView(forecastLocation);
+    // Don't close search overlay, keep it open behind forecast overlay
   };
 
   const handleClose = () => {
@@ -64,11 +75,27 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
           <h2>Search Locations</h2>
           <button 
             onClick={handleClose} 
-            className="search-overlay-close"
+            className="spot-overlay-close"
             title="Close search"
           >
-            <span className="close-icon-desktop">✕</span>
-            <span className="close-icon-mobile">← Back</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="close-icon-desktop">
+              <path 
+                d="M18 6L6 18M6 6l12 12" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="close-icon-mobile">
+              <path 
+                d="M19 12H5M12 19l-7-7 7-7" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
         </div>
         
@@ -96,16 +123,39 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
                 </div>
                 <div className="search-results-list">
                   {results.map(({ location }) => (
-                    <button
-                      key={location.windgram_id}
-                      className="search-result-item"
-                      onClick={() => handleLocationClick(location)}
-                    >
-                      <div className="search-result-name">{location.windgram_name}</div>
-                      <div className="search-result-region">
-                        {location.region_name}
-                      </div>
-                    </button>
+                    <div key={location.windgram_id} className="search-result-item">
+                      <button
+                        className="search-result-main"
+                        onClick={() => handleLocationClick(location)}
+                      >
+                        <div className="search-result-name">{location.windgram_name}</div>
+                        <div className="search-result-region">
+                          {location.region_name}
+                        </div>
+                      </button>
+                      <button
+                        className="search-result-view"
+                        onClick={() => handleLocationView(location)}
+                        title="View forecast"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path 
+                            d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          />
+                          <circle 
+                            cx="12" 
+                            cy="12" 
+                            r="3" 
+                            stroke="currentColor" 
+                            strokeWidth="2"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   ))}
                 </div>
               </>
