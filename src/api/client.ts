@@ -122,22 +122,13 @@ class ApiClient {
         'Origin': 'https://mobilerasp-5b91a.web.app',
       };
 
-      // Add If-None-Match header if we have an ETag from cache
-      if (cachedData?.etag) {
-        headers['If-None-Match'] = cachedData.etag;
-      }
+      // Note: Can't use If-None-Match header due to CORS restrictions
+      // Relying on time-based caching instead
       
       const response = await fetch(url, {
         method: 'GET',
         headers,
       });
-
-      // If 304 Not Modified, use cached data and update timestamp
-      if (response.status === 304 && cachedData) {
-        console.log('Data not modified, refreshing cache timestamp');
-        this.setCachedData(cachedData.data, cachedData.etag);
-        return { success: true, data: cachedData.data };
-      }
 
       if (!response.ok) {
         // If we have cached data but got an error, use cached data as fallback
@@ -150,9 +141,9 @@ class ApiClient {
 
       const data: ForecastRegion[] = await response.json();
       
-      // Cache the new data with ETag if available
-      const etag = response.headers.get('ETag') || response.headers.get('etag') || Date.now().toString();
-      this.setCachedData(data, etag);
+      // Cache the new data (no ETag due to CORS restrictions)
+      const timestamp = Date.now().toString();
+      this.setCachedData(data, timestamp);
       
       console.log('Fetched fresh forecast data and cached it');
       return { success: true, data };
@@ -250,19 +241,10 @@ class ApiClient {
         'Origin': 'https://mobilerasp-5b91a.web.app',
       };
 
-      // Add If-None-Match header if we have an ETag from cache
-      if (cachedEtag) {
-        headers['If-None-Match'] = cachedEtag;
-      }
+      // Note: Can't use If-None-Match header due to CORS restrictions
+      // Relying on time-based caching instead
 
       const response = await fetch(url, { headers });
-
-      // If 304 Not Modified, use cached data and update timestamp
-      if (response.status === 304 && cachedUrl) {
-        console.log(`Windgram not modified for ${windgramId}_${day}, refreshing cache timestamp`);
-        localStorage.setItem(timestampKey, Date.now().toString());
-        return { success: true, imageUrl: cachedUrl };
-      }
 
       if (!response.ok) {
         // If we have cached data but got an error, use cached data as fallback
@@ -274,11 +256,8 @@ class ApiClient {
       }
 
       // For images, we return the URL and cache it
-      const etag = response.headers.get('ETag') || response.headers.get('etag') || Date.now().toString();
-      
-      // Cache the URL and metadata
+      // Cache the URL and metadata (no ETag due to CORS restrictions)
       localStorage.setItem(cacheKey, url);
-      localStorage.setItem(etagKey, etag);
       localStorage.setItem(timestampKey, Date.now().toString());
       
       console.log(`Fetched fresh windgram for ${windgramId}_${day} and cached it`);
