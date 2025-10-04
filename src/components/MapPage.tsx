@@ -1,26 +1,17 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
-import { DivIcon } from 'leaflet';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { DivIcon, Control, DomUtil, DomEvent } from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { apiClient } from '../api/client';
 import { ForecastRegion, ForecastLocation } from '../api/types';
+import { SpotOverlay } from './SpotOverlay';
+import { SearchOverlay } from './SearchOverlay';
 import 'leaflet/dist/leaflet.css';
 
 interface MapPageProps {
   onLogout: () => void;
 }
 
-// Windsock icon for paragliding spots
-const windsockIcon = new DivIcon({
-  html: `<div class="windsock-marker">
-    <div class="windsock-highlight"></div>
-    <img src="/windsock_icon.svg" alt="Windsock" class="windsock-icon" />
-  </div>`,
-  className: 'windsock-container',
-  iconSize: [32, 32],
-  iconAnchor: [16, 16], // Center the icon on the coordinates
-  popupAnchor: [0, -16],
-});
 
 // Current location marker icon (Google Maps style)
 const currentLocationIcon = new DivIcon({
@@ -73,12 +64,69 @@ const loadMapState = (): MapViewState => {
   return DEFAULT_MAP_STATE;
 };
 
+// Custom Leaflet control for location button
+interface LocationControlOptions {
+  onLocationClick: () => void;
+  isLocating?: boolean;
+}
+
+class LocationControl extends Control {
+  private onLocationClick: () => void;
+  private isLocating: boolean = false;
+  private button!: HTMLAnchorElement;
+
+  constructor(options: LocationControlOptions) {
+    super({ position: 'topleft' });
+    this.onLocationClick = options.onLocationClick;
+    this.isLocating = options.isLocating || false;
+  }
+
+  onAdd() {
+    const container = DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+    this.button = DomUtil.create('a', '', container);
+    this.button.href = '#';
+    this.button.title = 'Go to my location';
+    this.updateIcon();
+    this.button.style.width = '30px';
+    this.button.style.height = '30px';
+    this.button.style.display = 'flex';
+    this.button.style.alignItems = 'center';
+    this.button.style.justifyContent = 'center';
+    this.button.style.textDecoration = 'none';
+
+    DomEvent.on(this.button, 'click', DomEvent.stopPropagation)
+      .on(this.button, 'click', DomEvent.preventDefault)
+      .on(this.button, 'click', this.onLocationClick);
+
+    return container;
+  }
+
+  updateLoadingState(isLocating: boolean) {
+    this.isLocating = isLocating;
+    this.updateIcon();
+  }
+
+  private updateIcon() {
+    if (!this.button) return;
+    
+    const animationClass = this.isLocating ? 'location-pulse' : '';
+    this.button.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#333" style="display: block; margin: auto;">
+        <circle cx="12" cy="12" r="4" class="${animationClass}"/>
+        <path d="M13 4.069V2h-2v2.069A8.01 8.01 0 0 0 4.069 11H2v2h2.069A8.008 8.008 0 0 0 11 19.931V22h2v-2.069A8.007 8.007 0 0 0 19.931 13H22v-2h-2.069A8.008 8.008 0 0 0 13 4.069zM12 18c-3.309 0-6-2.691-6-6s2.691-6 6-6 6 2.691 6 6-2.691 6-6 6z"/>
+      </svg>
+    `;
+  }
+}
+
 // Component to handle map interactions
 const MapController: React.FC<{ 
   userLocation: UserLocation | null;
   onZoomChange: (zoom: number) => void;
   onMapStateChange: (state: MapViewState) => void;
-}> = ({ userLocation, onZoomChange, onMapStateChange }) => {
+  onLocationRequest: () => void;
+  isLocating: boolean;
+}> = ({ userLocation, onZoomChange, onMapStateChange, onLocationRequest, isLocating }) => {
   const map = useMap();
   
   useEffect(() => {
@@ -108,7 +156,19 @@ const MapController: React.FC<{
       map.off('zoomend', handleMapChange);
       map.off('moveend', handleMapChange);
     };
-  }, [map, onZoomChange, onMapStateChange]);
+  }, [map]); // Only depend on map, not the callback functions
+
+  useEffect(() => {
+    const locationControl = new LocationControl({ 
+      onLocationClick: onLocationRequest,
+      isLocating: isLocating 
+    });
+    map.addControl(locationControl);
+
+    return () => {
+      map.removeControl(locationControl);
+    };
+  }, [map, onLocationRequest, isLocating]);
   
   return null;
 };
@@ -120,8 +180,10 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState('');
-  const [currentZoom, setCurrentZoom] = useState(6);
   const [mapState, setMapState] = useState<MapViewState>(() => loadMapState());
+  const [selectedLocation, setSelectedLocation] = useState<ForecastLocation | null>(null);
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     const loadForecastLocations = async () => {
@@ -152,11 +214,31 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
     saveMapState(newState);
   }, []);
 
-  const handleZoomChange = useCallback((zoom: number) => {
-    setCurrentZoom(zoom);
+
+  const handleMarkerClick = useCallback((location: ForecastLocation) => {
+    setSelectedLocation(location);
+    setIsOverlayOpen(true);
   }, []);
 
-  const getCurrentLocation = () => {
+  const handleSearchLocationSelect = useCallback((location: ForecastLocation) => {
+    setSelectedLocation(location);
+    setIsOverlayOpen(true);
+  }, []);
+
+  const handleCloseOverlay = useCallback(() => {
+    setIsOverlayOpen(false);
+    setSelectedLocation(null);
+  }, []);
+
+  const handleSearchClick = useCallback(() => {
+    setIsSearchOpen(true);
+  }, []);
+
+  const handleCloseSearch = useCallback(() => {
+    setIsSearchOpen(false);
+  }, []);
+
+  const getCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by this browser');
       return;
@@ -197,11 +279,49 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
       },
       options
     );
-  };
+  }, []);
 
-  const getAllLocations = (): ForecastLocation[] => {
+  const allLocations = useMemo((): ForecastLocation[] => {
     return regions.flatMap(region => region.windgram_list);
-  };
+  }, [regions]);
+
+  const memoizedMarkers = useMemo(() => 
+    allLocations.map((location) => {
+      const containerWidth = 120;
+      const containerHeight = 50;
+      const labelHeight = 16; // Approximate label height
+      const iconSize = 32; // Windsock icon size
+      
+      // Center horizontally, and vertically at the center of the windsock highlight circle
+      const anchorX = containerWidth / 2;
+      const anchorY = labelHeight + (iconSize / 2);
+      
+      const markerWithLabel = new DivIcon({
+        html: `<div class="windsock-marker-with-label">
+          <div class="marker-label">${location.windgram_name}</div>
+          <div class="windsock-marker">
+            <div class="windsock-highlight"></div>
+            <img src="/windsock_icon.svg" alt="Windsock" class="windsock-icon" />
+          </div>
+        </div>`,
+        className: 'windsock-container-with-label',
+        iconSize: [containerWidth, containerHeight],
+        iconAnchor: [anchorX, anchorY],
+        popupAnchor: [0, -anchorY],
+      });
+
+      return (
+        <Marker
+          key={location.windgram_id}
+          position={[parseFloat(location.coord.lat), parseFloat(location.coord.lng)]}
+          icon={markerWithLabel}
+          eventHandlers={{
+            click: () => handleMarkerClick(location)
+          }}
+        />
+      );
+    }), [allLocations, handleMarkerClick]
+  );
 
   if (isLoading) {
     return (
@@ -227,20 +347,9 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
     );
   }
 
-  const allLocations = getAllLocations();
 
   return (
     <div className="map-page">
-      <div className="map-header">
-        <h1>Paragliding Forecast Locations</h1>
-        <div className="map-controls">
-          <span>{allLocations.length} locations</span>
-          <button onClick={onLogout} className="logout-button">
-            Sign Out
-          </button>
-        </div>
-      </div>
-      
       {locationError && (
         <div className="location-error">
           {locationError}
@@ -248,28 +357,6 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
       )}
       
       <div className="map-container">
-        {/* Floating location control */}
-        <div className="map-location-control">
-          <button 
-            onClick={getCurrentLocation}
-            disabled={isLocating}
-            className="location-control-button"
-            title="Go to my location"
-          >
-            <svg 
-              width="18" 
-              height="18" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              className={isLocating ? "location-icon-loading" : "location-icon"}
-            >
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
-              <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2" fill="none"/>
-              <circle cx="12" cy="12" r="2" fill="currentColor"/>
-            </svg>
-          </button>
-        </div>
-
         <MapContainer
           center={mapState.center}
           zoom={mapState.zoom}
@@ -277,8 +364,10 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
         >
           <MapController 
             userLocation={userLocation} 
-            onZoomChange={handleZoomChange}
+            onZoomChange={() => {}} // No-op since we removed currentZoom state
             onMapStateChange={handleMapStateChange}
+            onLocationRequest={getCurrentLocation}
+            isLocating={isLocating}
           />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -315,34 +404,29 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
               });
             }}
           >
-            {allLocations.map((location) => (
-              <Marker
-                key={location.windgram_id}
-                position={[parseFloat(location.coord.lat), parseFloat(location.coord.lng)]}
-                icon={windsockIcon}
-              >
-                <Tooltip
-                  permanent
-                  direction="top"
-                  offset={[0, -20]}
-                  className={`location-name-tooltip ${currentZoom >= 10 ? 'tooltip-visible' : 'tooltip-hidden'}`}
-                >
-                  {location.windgram_name}
-                </Tooltip>
-                <Popup>
-                  <div className="location-popup">
-                    <strong>{location.windgram_name}</strong>
-                    <br />
-                    <small>
-                      {location.coord.lat}, {location.coord.lng}
-                    </small>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+            {memoizedMarkers}
           </MarkerClusterGroup>
         </MapContainer>
+        
+        <button onClick={handleSearchClick} className="search-button-overlay" title="Search locations">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </button>
       </div>
+      
+      <SpotOverlay 
+        location={selectedLocation}
+        isOpen={isOverlayOpen}
+        onClose={handleCloseOverlay}
+      />
+      
+      <SearchOverlay 
+        isOpen={isSearchOpen}
+        onClose={handleCloseSearch}
+        regions={regions}
+        onLocationSelect={handleSearchLocationSelect}
+      />
     </div>
   );
 };

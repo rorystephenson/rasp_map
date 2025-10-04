@@ -4,11 +4,20 @@ const BASE_URL = 'https://www.cumulus.it/php';
 const CACHE_KEY = 'forecast_locations_cache';
 const CACHE_ETAG_KEY = 'forecast_locations_etag';
 const CACHE_TIMESTAMP_KEY = 'forecast_locations_timestamp';
+const WINDGRAM_CACHE_PREFIX = 'windgram_cache_';
+const WINDGRAM_ETAG_PREFIX = 'windgram_etag_';
+const WINDGRAM_TIMESTAMP_PREFIX = 'windgram_timestamp_';
 
 interface CachedForecastData {
   data: ForecastRegion[];
   etag: string;
   timestamp: number;
+}
+
+interface WindgramResponse {
+  success: boolean;
+  imageUrl?: string;
+  error?: string;
 }
 
 class ApiClient {
@@ -180,6 +189,134 @@ class ApiClient {
   // Method to manually clear cache if needed
   clearForecastCache(): void {
     this.clearCache();
+  }
+
+  private getWindgramCacheKey(windgramId: string, day: number): string {
+    return `${WINDGRAM_CACHE_PREFIX}${windgramId}_${day}`;
+  }
+
+  private getWindgramEtagKey(windgramId: string, day: number): string {
+    return `${WINDGRAM_ETAG_PREFIX}${windgramId}_${day}`;
+  }
+
+  private getWindgramTimestampKey(windgramId: string, day: number): string {
+    return `${WINDGRAM_TIMESTAMP_PREFIX}${windgramId}_${day}`;
+  }
+
+  private isWindgramCacheValid(windgramId: string, day: number): boolean {
+    const timestamp = localStorage.getItem(this.getWindgramTimestampKey(windgramId, day));
+    if (!timestamp) return false;
+    
+    const cacheTime = parseInt(timestamp, 10);
+    const now = Date.now();
+    const sixHours = 6 * 60 * 60 * 1000; // 6 hours in milliseconds (windgrams update every few hours)
+    
+    return (now - cacheTime) < sixHours;
+  }
+
+  // Get windgram image with proper caching and ETag support
+  async getWindgram(windgramId: string, day: number = 0): Promise<WindgramResponse> {
+    if (!this.token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+    
+    if (day < 0 || day > 4) {
+      return { success: false, error: 'Day must be between 0 and 4' };
+    }
+
+    try {
+      const cacheKey = this.getWindgramCacheKey(windgramId, day);
+      const etagKey = this.getWindgramEtagKey(windgramId, day);
+      const timestampKey = this.getWindgramTimestampKey(windgramId, day);
+
+      // Check if we have valid cached data
+      const cachedUrl = localStorage.getItem(cacheKey);
+      const cachedEtag = localStorage.getItem(etagKey);
+      if (cachedUrl && this.isWindgramCacheValid(windgramId, day)) {
+        console.log(`Using cached windgram for ${windgramId}_${day}`);
+        return { success: true, imageUrl: cachedUrl };
+      }
+
+      const params = new URLSearchParams({
+        type: 'WINDGRAMS',
+        key: this.token,
+        secret: windgramId,
+        day: day.toString()
+      });
+
+      const url = `https://www.cumulus.it/rasp/publicwg.php?${params.toString()}`;
+      const headers: Record<string, string> = {
+        'Accept': 'image/*',
+        'Origin': 'https://mobilerasp-5b91a.web.app',
+      };
+
+      // Add If-None-Match header if we have an ETag from cache
+      if (cachedEtag) {
+        headers['If-None-Match'] = cachedEtag;
+      }
+
+      const response = await fetch(url, { headers });
+
+      // If 304 Not Modified, use cached data and update timestamp
+      if (response.status === 304 && cachedUrl) {
+        console.log(`Windgram not modified for ${windgramId}_${day}, refreshing cache timestamp`);
+        localStorage.setItem(timestampKey, Date.now().toString());
+        return { success: true, imageUrl: cachedUrl };
+      }
+
+      if (!response.ok) {
+        // If we have cached data but got an error, use cached data as fallback
+        if (cachedUrl) {
+          console.warn(`Windgram API request failed for ${windgramId}_${day}, using cached data as fallback`);
+          return { success: true, imageUrl: cachedUrl };
+        }
+        return { success: false, error: `HTTP ${response.status}: ${response.statusText}` };
+      }
+
+      // For images, we return the URL and cache it
+      const etag = response.headers.get('ETag') || response.headers.get('etag') || Date.now().toString();
+      
+      // Cache the URL and metadata
+      localStorage.setItem(cacheKey, url);
+      localStorage.setItem(etagKey, etag);
+      localStorage.setItem(timestampKey, Date.now().toString());
+      
+      console.log(`Fetched fresh windgram for ${windgramId}_${day} and cached it`);
+      return { success: true, imageUrl: url };
+
+    } catch (error) {
+      // If we have cached data, use it as fallback on network errors
+      const cachedUrl = localStorage.getItem(this.getWindgramCacheKey(windgramId, day));
+      if (cachedUrl) {
+        console.warn(`Network error for windgram ${windgramId}_${day}, using cached data as fallback`);
+        return { success: true, imageUrl: cachedUrl };
+      }
+      
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Network error' 
+      };
+    }
+  }
+
+  // Legacy method for backwards compatibility (returns URL directly)
+  getWindgramUrl(windgramId: string, day: number = 0): string {
+    if (!this.token) {
+      throw new Error('Not authenticated');
+    }
+    
+    if (day < 0 || day > 4) {
+      throw new Error('Day must be between 0 and 4');
+    }
+
+    const params = new URLSearchParams({
+      type: 'WINDGRAMS',
+      key: this.token,
+      secret: windgramId,
+      day: day.toString()
+    });
+
+    return `https://www.cumulus.it/rasp/publicwg.php?${params.toString()}`;
   }
 }
 

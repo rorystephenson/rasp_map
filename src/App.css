@@ -106,35 +106,33 @@
 
 /* Map Page Styles */
 .map-page {
-  display: flex;
-  flex-direction: column;
   height: 100vh;
 }
 
-.map-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.map-header h1 {
-  margin: 0;
-  color: #333;
-  font-size: 1.5rem;
-}
-
-.map-controls {
+.search-button-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 1rem;
-}
-
-.map-controls span {
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
   color: #666;
-  font-size: 0.9rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.search-button-overlay:hover {
+  background: #f5f5f5;
+  color: #333;
+  border-color: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .logout-button {
@@ -152,38 +150,6 @@
   background: #c82333;
 }
 
-/* Google Maps style floating location control */
-.map-location-control {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-}
-
-.location-control-button {
-  width: 40px;
-  height: 40px;
-  background: white;
-  border: none;
-  border-radius: 2px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  color: #5f6368;
-}
-
-.location-control-button:hover:not(:disabled) {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  background: #f8f9fa;
-}
-
-.location-control-button:disabled {
-  cursor: not-allowed;
-  color: #9aa0a6;
-}
 
 .location-icon {
   transition: transform 0.2s ease;
@@ -198,17 +164,34 @@
   to { transform: rotate(360deg); }
 }
 
+.location-pulse {
+  animation: locationPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes locationPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 .location-error {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
   background: #f8d7da;
   color: #721c24;
-  padding: 0.75rem 2rem;
+  padding: 0.75rem 1rem;
   border: 1px solid #f5c6cb;
+  border-radius: 4px;
   font-size: 0.9rem;
   text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  max-width: 90%;
 }
 
 .map-container {
-  flex: 1;
+  height: 100vh;
   position: relative;
 }
 
@@ -285,7 +268,7 @@
 }
 
 /* Windsock marker styling */
-.windsock-container {
+.windsock-container, .windsock-container-with-label {
   background: transparent !important;
   border: none !important;
 }
@@ -324,6 +307,28 @@
   position: relative;
   z-index: 2;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Marker with label styling */
+.windsock-marker-with-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 120px;
+}
+
+.marker-label {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-bottom: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  text-align: center;
 }
 
 /* Current location marker styling (Google Maps style) */
@@ -371,20 +376,334 @@
   border-top-color: rgba(0, 0, 0, 0.8) !important;
 }
 
+/* Search Overlay Styles */
+.search-overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.search-overlay {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f9fa;
+}
+
+.search-overlay-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.search-overlay-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.search-overlay-close:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.search-overlay-content {
+  padding: 1.5rem 1.5rem 0 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.search-overlay-content p {
+  margin: 0;
+  color: #666;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.search-input-container {
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.search-results {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.search-placeholder p {
+  color: #999;
+  font-style: italic;
+}
+
+.search-results-header {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0;
+  padding: 0.5rem 0 0 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0 1.5rem 0;
+  min-height: 0;
+}
+
+.search-result-item {
+  width: 100%;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-result-item:hover {
+  background: #f8f9fa;
+  border-color: #667eea;
+}
+
+.search-result-name {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.search-result-region {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.search-no-results p {
+  color: #999;
+  font-style: italic;
+}
+
+/* Spot Overlay Styles */
+.spot-overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.spot-overlay {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: calc(100vh - 40px); /* Square based on viewport height minus padding */
+  height: calc(100vh - 40px);
+  max-width: calc(100vw - 40px); /* Don't exceed viewport width minus padding */
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.spot-overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f9fa;
+}
+
+.spot-overlay-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.spot-overlay-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.spot-overlay-close:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.close-icon-mobile {
+  display: none;
+}
+
+.day-selector {
+  display: flex;
+  padding: 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.day-button {
+  flex: 1;
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  border-right: 1px solid #e5e5e5;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.day-button:last-child {
+  border-right: none;
+}
+
+.day-button:hover {
+  background: #f8f9fa;
+}
+
+.day-button-active {
+  background: #667eea !important;
+  color: white !important;
+}
+
+.spot-overlay-content {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.spot-overlay-content p {
+  margin: 0 0 1rem 0;
+  color: #666;
+}
+
+.windgram-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #666;
+}
+
+.windgram-error {
+  text-align: center;
+  color: #e74c3c;
+  padding: 2rem;
+}
+
+.windgram-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
-  .map-header {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-  }
-  
-  .map-header h1 {
-    font-size: 1.25rem;
-  }
   
   .auth-container {
     margin: 1rem;
     padding: 1.5rem;
+  }
+  
+  /* Fullscreen overlay on mobile */
+  .spot-overlay-backdrop {
+    padding: 0;
+  }
+  
+  .spot-overlay {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+  }
+  
+  /* Switch to back button when overlay is fullscreen */
+  .close-icon-desktop {
+    display: none;
+  }
+  
+  .close-icon-mobile {
+    display: block;
+  }
+  
+  /* Search overlay mobile styles */
+  .search-overlay {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+  }
+  
+  .search-overlay-backdrop {
+    padding: 0;
+  }
+  
+  /* Mobile search results should fill available space */
+  .search-results-list {
+    max-height: none;
   }
 }
