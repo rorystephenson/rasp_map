@@ -37,6 +37,13 @@ const DEFAULT_MAP_STATE: MapViewState = {
   zoom: 6
 };
 
+// Map boundaries based on actual forecast locations (Italy + nearby countries)
+// Extra buffer so outermost spots appear in center when panning to edges
+const MAP_BOUNDS: [[number, number], [number, number]] = [
+  [34.4516, 3.3907], // Southwest corner (2 degrees extra buffer)
+  [49.9639, 19.7863]  // Northeast corner (2 degrees extra buffer)
+];
+
 // Helper functions for map state persistence
 const saveMapState = (state: MapViewState): void => {
   try {
@@ -388,6 +395,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
         <MapContainer
           center={mapState.center}
           zoom={mapState.zoom}
+          maxBounds={MAP_BOUNDS}
           style={{ height: '100%', width: '100%' }}
         >
           <MapController 
