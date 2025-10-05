@@ -756,4 +756,10 @@
   .search-results-list {
     max-height: none;
   }
+  
+  /* Remove horizontal padding from forecast content on mobile */
+  .spot-overlay-content {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
