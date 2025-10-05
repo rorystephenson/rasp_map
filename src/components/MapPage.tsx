@@ -299,6 +299,11 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
             setLocationError('An unknown error occurred');
             break;
         }
+        
+        // Clear location error after 5 seconds
+        setTimeout(() => {
+          setLocationError('');
+        }, 5000);
       },
       options
     );

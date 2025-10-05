@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ForecastLocation, ForecastRegion } from '../api/types';
 import { SearchService, SearchResult, LocationWithRegion } from '../services/SearchService';
 
+const SEARCH_QUERY_KEY = 'search_query';
+
 interface SearchOverlayProps {
   isOpen: boolean;
   onClose: () => void;
@@ -17,7 +19,15 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
   onLocationSelect,
   onLocationView
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => {
+    // Load saved search query from localStorage
+    try {
+      return localStorage.getItem(SEARCH_QUERY_KEY) || '';
+    } catch (error) {
+      console.warn('Failed to load saved search query:', error);
+      return '';
+    }
+  });
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searchService] = useState(() => new SearchService());
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,6 +46,15 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
     }
   }, [isOpen]);
 
+  // Save query to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(SEARCH_QUERY_KEY, query);
+    } catch (error) {
+      console.warn('Failed to save search query:', error);
+    }
+  }, [query]);
+
   // Perform search when query changes
   useEffect(() => {
     if (query.trim()) {
@@ -51,7 +70,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
     const { region_name, ...forecastLocation } = location;
     onLocationSelect(forecastLocation);
     onClose();
-    setQuery(''); // Clear search
+    // Keep search query for next time
   };
 
   const handleLocationView = (location: LocationWithRegion) => {
@@ -63,7 +82,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
 
   const handleClose = () => {
     onClose();
-    setQuery(''); // Clear search when closing
+    // Keep search query for next time
   };
 
   if (!isOpen) return null;
