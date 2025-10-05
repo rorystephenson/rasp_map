@@ -762,4 +762,10 @@
     padding-left: 0;
     padding-right: 0;
   }
+  
+  /* Prevent stuck hover states on mobile touch devices */
+  .spot-overlay-close:hover {
+    background: none;
+    color: #666;
+  }
 }
