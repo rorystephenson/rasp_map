@@ -113,6 +113,24 @@
   height: 100vh;
 }
 
+.beta-badge {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  pointer-events: none;
+  user-select: none;
+}
+
 .search-button-overlay {
   position: absolute;
   top: 10px;
@@ -677,10 +695,36 @@
   color: white !important;
 }
 
-.spot-overlay-content {
-  padding: 1.5rem;
+/* Forecast content container - vertical stack */
+.forecast-content-container {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* RASP content - takes remaining space */
+.spot-overlay-content {
+  flex: 1;
+  min-height: 0; /* Allow flex item to shrink below content size */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Windy content - scaled down to save space */
+.windy-overlay-content {
+  height: 130px; /* Container height for 70% scaled iframe (187px * 0.7 ≈ 130px) */
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.windy-overlay-content iframe {
+  width: 142.86%; /* Scale back up: 100% / 0.7 */
+  height: 267px; /* Scale back up: 187px / 0.7 */
+  transform: scale(0.7);
+  transform-origin: top left;
+  border: none;
 }
 
 .spot-overlay-content p {
@@ -711,17 +755,17 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  
+
   .auth-container {
     margin: 1rem;
     padding: 1.5rem;
   }
-  
+
   /* Fullscreen overlay on mobile */
   .spot-overlay-backdrop {
     padding: 0;
   }
-  
+
   .spot-overlay {
     width: 100%;
     height: 100%;
@@ -729,12 +773,42 @@
     max-height: none;
     border-radius: 0;
   }
-  
+
+  /* Compact header on mobile - match day selector height */
+  .spot-overlay-header {
+    padding: 0 0.5rem 0 1rem; /* No vertical padding */
+    min-height: 44px; /* Match day button height */
+    display: flex;
+    align-items: center;
+  }
+
+  .spot-overlay-header h2 {
+    font-size: 0.9rem; /* Slightly smaller */
+    line-height: 1.2; /* Tighter line height */
+  }
+
+  /* Ensure close button is still easy to tap */
+  .spot-overlay-close {
+    width: 44px;
+    height: 44px;
+    padding: 10px; /* Internal padding for the icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Compact day selector on mobile */
+  .day-button {
+    padding: 0.5rem;
+    min-height: 44px; /* Minimum touch target */
+    font-size: 0.8rem;
+  }
+
   /* Switch to back button when overlay is fullscreen */
   .close-icon-desktop {
     display: none;
   }
-  
+
   .close-icon-mobile {
     display: block;
   }

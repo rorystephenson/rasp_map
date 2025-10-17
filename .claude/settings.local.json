@@ -6,7 +6,11 @@
       "Bash(npm run build:*)",
       "Bash(npm test:*)",
       "Bash(npm run lint)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "WebFetch(domain:embed.windy.com)",
+      "WebSearch",
+      "WebFetch(domain:community.windy.com)",
+      "WebFetch(domain:api.windy.com)"
     ],
     "deny": [],
     "ask": []
