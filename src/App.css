@@ -766,7 +766,8 @@
 
   .spot-overlay {
     width: 100vw;
-    height: 100vh;
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* Dynamic viewport height - adjusts to address bar */
     max-width: none;
     max-height: none;
     border-radius: 0;
