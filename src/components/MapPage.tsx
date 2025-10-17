@@ -171,7 +171,7 @@ const MapController: React.FC<{
       map.off('zoomend', handleMapChange);
       map.off('moveend', handleMapChange);
     };
-  }, [map]); // Only depend on map, not the callback functions
+  }, [map, onZoomChange, onMapStateChange]);
 
   useEffect(() => {
     const locationControl = new LocationControl({ 

@@ -217,12 +217,10 @@ class ApiClient {
 
     try {
       const cacheKey = this.getWindgramCacheKey(windgramId, day);
-      const etagKey = this.getWindgramEtagKey(windgramId, day);
       const timestampKey = this.getWindgramTimestampKey(windgramId, day);
 
       // Check if we have valid cached data
       const cachedUrl = localStorage.getItem(cacheKey);
-      const cachedEtag = localStorage.getItem(etagKey);
       if (cachedUrl && this.isWindgramCacheValid(windgramId, day)) {
         console.log(`Using cached windgram for ${windgramId}_${day}`);
         return { success: true, imageUrl: cachedUrl };
