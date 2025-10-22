@@ -157,6 +157,32 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
+.favourites-button-overlay {
+  position: absolute;
+  top: 10px;
+  right: 60px; /* Position to the left of search button */
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  color: #e74c3c;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.favourites-button-overlay:hover {
+  background: #fff5f5;
+  color: #c0392b;
+  border-color: rgba(231, 76, 60, 0.3);
+  box-shadow: 0 3px 8px rgba(231, 76, 60, 0.3);
+}
+
 .logout-button {
   padding: 0.5rem 1rem;
   background: #dc3545;
@@ -252,6 +278,7 @@
 .custom-marker-cluster {
   background: transparent !important;
   border: none !important;
+  z-index: 500 !important; /* Above markers but below tooltips (tooltip pane: 1000) */
 }
 
 .cluster-icon {
@@ -290,7 +317,7 @@
 }
 
 /* Windsock marker styling */
-.windsock-container, .windsock-container-with-label {
+.windsock-container {
   background: transparent !important;
   border: none !important;
 }
@@ -331,26 +358,27 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-/* Marker with label styling */
-.windsock-marker-with-label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 120px;
+/* Marker tooltip styling */
+.marker-tooltip {
+  background: rgba(0, 0, 0, 0.6) !important;
+  border: none !important;
+  border-radius: 3px !important;
+  color: white !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  padding: 2px 6px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
 }
 
-.marker-label {
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-  margin-bottom: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  pointer-events: none;
-  text-align: center;
+.marker-tooltip::before {
+  display: none !important; /* Hide default tooltip arrow */
+}
+
+/* Ensure tooltips appear above everything */
+.leaflet-tooltip-pane {
+  z-index: 1000 !important;
 }
 
 /* Current location marker styling (Google Maps style) */
@@ -553,6 +581,24 @@
   justify-content: center;
 }
 
+.search-result-favourite {
+  flex-shrink: 0;
+  width: 48px;
+  background: none;
+  border: none;
+  border-left: 1px solid #e5e5e5;
+  cursor: pointer;
+  color: #e74c3c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.search-result-favourite:hover {
+  background: #fff5f5;
+}
+
 .search-result-view {
   flex-shrink: 0;
   width: 48px;
@@ -642,6 +688,27 @@
   font-size: 1.25rem;
   font-weight: 600;
   flex: 1;
+}
+
+.spot-overlay-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.favourite-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #e74c3c;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.favourite-toggle:hover {
+  background: #e9ecef;
+  transform: scale(1.1);
 }
 
 .spot-overlay-close {
@@ -838,7 +905,21 @@
     line-height: 1.2; /* Tighter line height */
   }
 
-  /* Ensure close button is still easy to tap */
+  /* Ensure action buttons are still easy to tap */
+  .favourite-toggle {
+    width: 44px;
+    height: 44px;
+    padding: 10px; /* Internal padding for the icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .favourite-toggle:hover {
+    background: none;
+    transform: none;
+  }
+
   .spot-overlay-close {
     width: 44px;
     height: 44px;

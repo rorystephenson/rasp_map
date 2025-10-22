@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from 'react-leaflet';
 import { DivIcon, Control, DomUtil, DomEvent } from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { apiClient } from '../api/client';
 import { ForecastRegion, ForecastLocation } from '../api/types';
 import { SpotOverlay } from './SpotOverlay';
 import { SearchOverlay } from './SearchOverlay';
+import { FavouritesOverlay } from './FavouritesOverlay';
 import 'leaflet/dist/leaflet.css';
 
 interface MapPageProps {
@@ -29,6 +30,7 @@ interface UserLocation {
 interface MapViewState {
   center: [number, number];
   zoom: number;
+  timestamp?: number; // Unix timestamp in milliseconds
 }
 
 const MAP_STATE_KEY = 'map_view_state';
@@ -46,8 +48,21 @@ const MAP_BOUNDS: [[number, number], [number, number]] = [
 
 // Helper functions for map state persistence
 const saveMapState = (state: MapViewState): void => {
+  const timestamp = Date.now();
+  const stateWithTimestamp = { ...state, timestamp };
+
   try {
-    localStorage.setItem(MAP_STATE_KEY, JSON.stringify(state));
+    // Check if there's a newer save already in localStorage (from another tab)
+    const existing = localStorage.getItem(MAP_STATE_KEY);
+    if (existing) {
+      const existingState = JSON.parse(existing);
+      if (existingState.timestamp && existingState.timestamp > timestamp) {
+        // Skip save - another tab has a newer state
+        return;
+      }
+    }
+
+    localStorage.setItem(MAP_STATE_KEY, JSON.stringify(stateWithTimestamp));
   } catch (error) {
     console.warn('Failed to save map state:', error);
   }
@@ -59,8 +74,8 @@ const loadMapState = (): MapViewState => {
     if (saved) {
       const parsed = JSON.parse(saved);
       // Validate the loaded state
-      if (parsed.center && Array.isArray(parsed.center) && 
-          parsed.center.length === 2 && 
+      if (parsed.center && Array.isArray(parsed.center) &&
+          parsed.center.length === 2 &&
           typeof parsed.zoom === 'number') {
         return parsed;
       }
@@ -127,17 +142,27 @@ class LocationControl extends Control {
 }
 
 // Component to handle map interactions
-const MapController: React.FC<{ 
+// Module-level flag to track if map is ready (persists across remounts)
+let isMapReadyFlag = false;
+
+const MapController: React.FC<{
   userLocation: UserLocation | null;
-  onZoomChange: (zoom: number) => void;
   onMapStateChange: (state: MapViewState) => void;
   onLocationRequest: () => void;
   isLocating: boolean;
   onMapReady?: (map: any) => void;
-}> = ({ userLocation, onZoomChange, onMapStateChange, onLocationRequest, isLocating, onMapReady }) => {
+}> = ({ userLocation, onMapStateChange, onLocationRequest, isLocating, onMapReady }) => {
   const map = useMap();
-  
+
   useEffect(() => {
+    // Only set up whenReady callback if not already ready
+    if (!isMapReadyFlag) {
+      map.whenReady(() => {
+        isMapReadyFlag = true;
+      });
+    }
+
+    // Always call onMapReady if provided
     if (onMapReady) {
       onMapReady(map);
     }
@@ -151,26 +176,29 @@ const MapController: React.FC<{
 
   useEffect(() => {
     const handleMapChange = () => {
+      // Only save state after map is ready
+      if (!isMapReadyFlag) {
+        return;
+      }
+
       const zoom = map.getZoom();
       const center = map.getCenter();
       const newState: MapViewState = {
         center: [center.lat, center.lng],
         zoom: zoom
       };
-      
-      onZoomChange(zoom);
+
       onMapStateChange(newState);
     };
 
     map.on('zoomend', handleMapChange);
     map.on('moveend', handleMapChange);
-    handleMapChange(); // Set initial state
 
     return () => {
       map.off('zoomend', handleMapChange);
       map.off('moveend', handleMapChange);
     };
-  }, [map, onZoomChange, onMapStateChange]);
+  }, [map, onMapStateChange]);
 
   useEffect(() => {
     const locationControl = new LocationControl({ 
@@ -187,6 +215,9 @@ const MapController: React.FC<{
   return null;
 };
 
+// Load initial map state before component renders to avoid race conditions
+const INITIAL_MAP_STATE = loadMapState();
+
 export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [regions, setRegions] = useState<ForecastRegion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -194,10 +225,10 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState('');
-  const [mapState, setMapState] = useState<MapViewState>(() => loadMapState());
   const [selectedLocation, setSelectedLocation] = useState<ForecastLocation | null>(null);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFavouritesOpen, setIsFavouritesOpen] = useState(false);
   const [mapInstance, setMapInstance] = useState<any>(null);
 
   useEffect(() => {
@@ -225,7 +256,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   }, [onLogout]);
 
   const handleMapStateChange = useCallback((newState: MapViewState) => {
-    setMapState(newState);
+    // Just save to localStorage, don't store in React state to avoid re-renders
     saveMapState(newState);
   }, []);
 
@@ -262,6 +293,14 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
 
   const handleCloseSearch = useCallback(() => {
     setIsSearchOpen(false);
+  }, []);
+
+  const handleFavouritesClick = useCallback(() => {
+    setIsFavouritesOpen(true);
+  }, []);
+
+  const handleCloseFavourites = useCallback(() => {
+    setIsFavouritesOpen(false);
   }, []);
 
   const handleMapReady = useCallback((map: any) => {
@@ -320,27 +359,21 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
     return regions.flatMap(region => region.windgram_list);
   }, [regions]);
 
-  const memoizedMarkers = useMemo(() => 
+  const memoizedMarkers = useMemo(() =>
     allLocations.map((location) => {
-      const containerWidth = 120;
-      const containerHeight = 50;
-      const labelHeight = 16; // Approximate label height
-      const iconSize = 32; // Windsock icon size
-      
-      // Center horizontally, and vertically at the center of the windsock highlight circle
-      const anchorX = containerWidth / 2;
-      const anchorY = labelHeight + (iconSize / 2);
-      
-      const markerWithLabel = new DivIcon({
-        html: `<div class="windsock-marker-with-label">
-          <div class="marker-label">${location.windgram_name}</div>
-          <div class="windsock-marker">
-            <div class="windsock-highlight"></div>
-            <img src="/windsock_icon.svg" alt="Windsock" class="windsock-icon" />
-          </div>
+      const iconSize = 32; // Windsock icon size - this defines the clickable area
+
+      // Center the icon
+      const anchorX = iconSize / 2;
+      const anchorY = iconSize / 2;
+
+      const markerIcon = new DivIcon({
+        html: `<div class="windsock-marker">
+          <div class="windsock-highlight"></div>
+          <img src="/windsock_icon.svg" alt="Windsock" class="windsock-icon" />
         </div>`,
-        className: 'windsock-container-with-label',
-        iconSize: [containerWidth, containerHeight],
+        className: 'windsock-container',
+        iconSize: [iconSize, iconSize],
         iconAnchor: [anchorX, anchorY],
         popupAnchor: [0, -anchorY],
       });
@@ -349,11 +382,20 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
         <Marker
           key={location.windgram_id}
           position={[parseFloat(location.coord.lat), parseFloat(location.coord.lng)]}
-          icon={markerWithLabel}
+          icon={markerIcon}
           eventHandlers={{
             click: () => handleMarkerClick(location)
           }}
-        />
+        >
+          <Tooltip
+            permanent
+            direction="top"
+            offset={[0, -16]}
+            className="marker-tooltip"
+          >
+            {location.windgram_name}
+          </Tooltip>
+        </Marker>
       );
     }), [allLocations, handleMarkerClick]
   );
@@ -393,14 +435,14 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
 
       <div className="map-container">
         <MapContainer
-          center={mapState.center}
-          zoom={mapState.zoom}
+          center={INITIAL_MAP_STATE.center}
+          zoom={INITIAL_MAP_STATE.zoom}
           maxBounds={MAP_BOUNDS}
+          maxBoundsViscosity={1.0}
           style={{ height: '100%', width: '100%' }}
         >
-          <MapController 
-            userLocation={userLocation} 
-            onZoomChange={() => {}} // No-op since we removed currentZoom state
+          <MapController
+            userLocation={userLocation}
             onMapStateChange={handleMapStateChange}
             onLocationRequest={getCurrentLocation}
             isLocating={isLocating}
@@ -444,7 +486,13 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
             {memoizedMarkers}
           </MarkerClusterGroup>
         </MapContainer>
-        
+
+        <button onClick={handleFavouritesClick} className="favourites-button-overlay" title="Preferiti">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+        </button>
+
         <button onClick={handleSearchClick} className="search-button-overlay" title="Search locations">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -458,9 +506,17 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
         onClose={handleCloseOverlay}
       />
       
-      <SearchOverlay 
+      <SearchOverlay
         isOpen={isSearchOpen}
         onClose={handleCloseSearch}
+        regions={regions}
+        onLocationSelect={handleSearchLocationSelect}
+        onLocationView={handleSearchLocationView}
+      />
+
+      <FavouritesOverlay
+        isOpen={isFavouritesOpen}
+        onClose={handleCloseFavourites}
         regions={regions}
         onLocationSelect={handleSearchLocationSelect}
         onLocationView={handleSearchLocationView}

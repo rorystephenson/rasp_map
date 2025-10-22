@@ -7,6 +7,10 @@ export interface ForecastLocation {
   };
 }
 
+export interface LocationWithRegion extends ForecastLocation {
+  region_name: string;
+}
+
 export interface ForecastRegion {
   region_id: string;
   region_name: string;

@@ -1,9 +1,5 @@
 import { matchSorter, MatchSorterOptions, rankings } from 'match-sorter';
-import { ForecastLocation, ForecastRegion } from '../api/types';
-
-export interface LocationWithRegion extends ForecastLocation {
-  region_name: string;
-}
+import { ForecastRegion, LocationWithRegion } from '../api/types';
 
 export interface SearchResult {
   location: LocationWithRegion;
@@ -102,3 +98,4 @@ export class SearchService {
     return this.locations.length > 0;
   }
 }
+

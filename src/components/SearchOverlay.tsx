@@ -1,8 +1,67 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ForecastLocation, ForecastRegion } from '../api/types';
-import { SearchService, SearchResult, LocationWithRegion } from '../services/SearchService';
+import { ForecastLocation, ForecastRegion, LocationWithRegion } from '../api/types';
+import { SearchService, SearchResult } from '../services/SearchService';
+import { useIsFavourite, toggleFavourite } from '../utils/favourites';
 
 const SEARCH_QUERY_KEY = 'search_query';
+
+interface SearchResultItemProps {
+  location: LocationWithRegion;
+  onLocationClick: (location: LocationWithRegion) => void;
+  onLocationView: (location: LocationWithRegion) => void;
+}
+
+const SearchResultItem: React.FC<SearchResultItemProps> = ({ location, onLocationClick, onLocationView }) => {
+  const isFavourited = useIsFavourite(location.windgram_id);
+
+  const handleToggleFavourite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavourite(location.windgram_id);
+  };
+
+  return (
+    <div className="search-result-item">
+      <button
+        className="search-result-main"
+        onClick={() => onLocationClick(location)}
+      >
+        <div className="search-result-name">{location.windgram_name}</div>
+        <div className="search-result-region">{location.region_name}</div>
+      </button>
+      <button
+        className="search-result-favourite"
+        onClick={handleToggleFavourite}
+        title={isFavourited ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill={isFavourited ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      <button
+        className="search-result-view"
+        onClick={() => onLocationView(location)}
+        title="Mostra previsioni"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle
+            cx="12"
+            cy="12"
+            r="3"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+};
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -142,39 +201,12 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
                 </div>
                 <div className="search-results-list">
                   {results.map(({ location }) => (
-                    <div key={location.windgram_id} className="search-result-item">
-                      <button
-                        className="search-result-main"
-                        onClick={() => handleLocationClick(location)}
-                      >
-                        <div className="search-result-name">{location.windgram_name}</div>
-                        <div className="search-result-region">
-                          {location.region_name}
-                        </div>
-                      </button>
-                      <button
-                        className="search-result-view"
-                        onClick={() => handleLocationView(location)}
-                        title="View forecast"
-                      >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                          <path 
-                            d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" 
-                            stroke="currentColor" 
-                            strokeWidth="2" 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round"
-                          />
-                          <circle 
-                            cx="12" 
-                            cy="12" 
-                            r="3" 
-                            stroke="currentColor" 
-                            strokeWidth="2"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+                    <SearchResultItem
+                      key={location.windgram_id}
+                      location={location}
+                      onLocationClick={handleLocationClick}
+                      onLocationView={handleLocationView}
+                    />
                   ))}
                 </div>
               </>
