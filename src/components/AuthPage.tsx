@@ -38,7 +38,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   return (
     <div className="auth-page">
       <div className="auth-container">
-        <h1>RASP Plus</h1>
+        <h1>RASP Map</h1>
         <p>Enter your authentication key to access paragliding forecasts</p>
         
         <form onSubmit={handleSubmit} className="auth-form">

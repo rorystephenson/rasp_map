@@ -1,6 +1,6 @@
 {
-  "short_name": "RASP+",
-  "name": "RASP+ Paragliding Forecasts",
+  "short_name": "RASP Map",
+  "name": "RASP Map",
   "icons": [
     {
       "src": "windsock_favicon.svg",
