@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ForecastLocation } from '../api/types';
 import { apiClient } from '../api/client';
 import { getItalianDayAbbreviation, saveSelectedDate, getInitialDayOffset } from '../utils/dateUtils';
-import { WindyEmbed } from './WindyEmbed';
 
 interface SpotOverlayProps {
   location: ForecastLocation | null;
@@ -10,32 +9,11 @@ interface SpotOverlayProps {
   onClose: () => void;
 }
 
-const WINDY_COLLAPSED_KEY = 'windy_section_collapsed';
-
-const getWindyCollapsedState = (): boolean => {
-  try {
-    const stored = localStorage.getItem(WINDY_COLLAPSED_KEY);
-    return stored === 'true';
-  } catch (error) {
-    console.warn('Failed to load Windy collapsed state:', error);
-    return false;
-  }
-};
-
-const setWindyCollapsedState = (collapsed: boolean): void => {
-  try {
-    localStorage.setItem(WINDY_COLLAPSED_KEY, collapsed.toString());
-  } catch (error) {
-    console.warn('Failed to save Windy collapsed state:', error);
-  }
-};
-
 export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onClose }) => {
   const [windgramUrl, setWindgramUrl] = useState<string>('');
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [selectedDay, setSelectedDay] = useState(() => getInitialDayOffset());
-  const [windyCollapsed, setWindyCollapsed] = useState(() => getWindyCollapsedState());
 
   useEffect(() => {
     if (location && isOpen) {
@@ -79,12 +57,6 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onCl
   const handleImageError = () => {
     setImageLoading(false);
     setImageError(true);
-  };
-
-  const toggleWindySection = () => {
-    const newState = !windyCollapsed;
-    setWindyCollapsed(newState);
-    setWindyCollapsedState(newState);
   };
 
   if (!isOpen || !location) {
@@ -164,52 +136,46 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onCl
             )}
           </div>
 
-          {/* Windy Section - collapsible */}
-          <div className="windy-section">
-            <div className="windy-section-header">
-              <button className="windy-section-toggle" onClick={toggleWindySection}>
-                <div className="windy-section-title">
-                  <img
-                    src="https://cdn.brandfetch.io/idRnsbaAMF/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1760092724025"
-                    alt="Windy"
-                    className="windy-section-logo"
-                  />
-                  <span className="windy-section-label">Windy</span>
-                </div>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className={`collapse-icon ${windyCollapsed ? 'collapsed' : ''}`}
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              <a
-                href={`https://www.windy.com/${lat}/${lng}/airgram?${lat},${lng},11`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="windy-airgram-button"
-                title="Open Airgram in Windy"
-              >
-                <span>Apri Airgram</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="external-link-icon">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
-            </div>
-            {!windyCollapsed && (
-              <div className="windy-overlay-content">
-                <WindyEmbed latitude={lat} longitude={lng} />
-              </div>
-            )}
+          {/* External forecast links */}
+          <div className="external-links-section">
+            <a
+              href={`https://www.windy.com/${lat}/${lng}/airgram?${lat},${lng},11`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="external-forecast-link"
+              title="Open Airgram in Windy"
+            >
+              <img
+                src="/windy_logo.png"
+                alt="Windy"
+                className="forecast-link-logo"
+              />
+              <span className="forecast-link-text">Windy Airgram</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="external-link-icon">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </a>
+            <a
+              href={`https://meteo-parapente.com/#/${lat},${lng},11`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="external-forecast-link"
+              title="Open Meteo-Parapente"
+            >
+              <img
+                src="/meteo_parapente_logo.png"
+                alt="Meteo-Parapente"
+                className="forecast-link-logo meteo-logo"
+              />
+              <span className="forecast-link-text">Meteo-Parapente</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="external-link-icon">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </a>
           </div>
         </div>
       </div>
