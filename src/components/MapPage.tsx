@@ -6,7 +6,6 @@ import { apiClient } from '../api/client';
 import { ForecastRegion, ForecastLocation } from '../api/types';
 import { SpotOverlay } from './SpotOverlay';
 import { SearchOverlay } from './SearchOverlay';
-import { isBetaEnabled } from '../utils/featureFlags';
 import 'leaflet/dist/leaflet.css';
 
 interface MapPageProps {
@@ -200,7 +199,6 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mapInstance, setMapInstance] = useState<any>(null);
-  const [betaEnabled] = useState(() => isBetaEnabled());
 
   useEffect(() => {
     const loadForecastLocations = async () => {
@@ -387,10 +385,6 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
 
   return (
     <div className="map-page">
-      {betaEnabled && (
-        <div className="beta-badge">BETA</div>
-      )}
-
       {locationError && (
         <div className="location-error">
           {locationError}

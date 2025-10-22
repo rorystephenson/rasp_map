@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ForecastLocation } from '../api/types';
 import { apiClient } from '../api/client';
 import { getItalianDayAbbreviation, saveSelectedDate, getInitialDayOffset } from '../utils/dateUtils';
-import { isBetaEnabled } from '../utils/featureFlags';
 import { WindyEmbed } from './WindyEmbed';
 
 interface SpotOverlayProps {
@@ -37,7 +36,6 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onCl
   const [imageError, setImageError] = useState(false);
   const [selectedDay, setSelectedDay] = useState(() => getInitialDayOffset());
   const [windyCollapsed, setWindyCollapsed] = useState(() => getWindyCollapsedState());
-  const betaEnabled = isBetaEnabled();
 
   useEffect(() => {
     if (location && isOpen) {
@@ -166,55 +164,53 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onCl
             )}
           </div>
 
-          {/* Windy Section - collapsible when beta enabled */}
-          {betaEnabled && (
-            <div className="windy-section">
-              <div className="windy-section-header">
-                <button className="windy-section-toggle" onClick={toggleWindySection}>
-                  <div className="windy-section-title">
-                    <img
-                      src="https://cdn.brandfetch.io/idRnsbaAMF/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1760092724025"
-                      alt="Windy"
-                      className="windy-section-logo"
-                    />
-                    <span className="windy-section-label">Windy</span>
-                  </div>
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={`collapse-icon ${windyCollapsed ? 'collapsed' : ''}`}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                <a
-                  href={`https://www.windy.com/${lat}/${lng}/airgram?${lat},${lng},11`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="windy-airgram-button"
-                  title="Open Airgram in Windy"
-                >
-                  <span>Apri Airgram</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="external-link-icon">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
-                </a>
-              </div>
-              {!windyCollapsed && (
-                <div className="windy-overlay-content">
-                  <WindyEmbed latitude={lat} longitude={lng} />
+          {/* Windy Section - collapsible */}
+          <div className="windy-section">
+            <div className="windy-section-header">
+              <button className="windy-section-toggle" onClick={toggleWindySection}>
+                <div className="windy-section-title">
+                  <img
+                    src="https://cdn.brandfetch.io/idRnsbaAMF/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1760092724025"
+                    alt="Windy"
+                    className="windy-section-logo"
+                  />
+                  <span className="windy-section-label">Windy</span>
                 </div>
-              )}
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`collapse-icon ${windyCollapsed ? 'collapsed' : ''}`}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <a
+                href={`https://www.windy.com/${lat}/${lng}/airgram?${lat},${lng},11`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="windy-airgram-button"
+                title="Open Airgram in Windy"
+              >
+                <span>Apri Airgram</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="external-link-icon">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
             </div>
-          )}
+            {!windyCollapsed && (
+              <div className="windy-overlay-content">
+                <WindyEmbed latitude={lat} longitude={lng} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
