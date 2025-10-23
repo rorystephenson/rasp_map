@@ -210,8 +210,8 @@
 
 .search-button-overlay {
   position: absolute;
-  top: 10px;
-  right: 60px; /* Position to the left of menu button */
+  top: 60px; /* Below menu button */
+  right: 10px;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -236,8 +236,8 @@
 
 .favourites-button-overlay {
   position: absolute;
-  top: 10px;
-  right: 110px; /* Position to the left of search button */
+  top: 110px; /* Below search button */
+  right: 10px;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -262,8 +262,8 @@
 
 .menu-container {
   position: absolute;
-  top: 10px;
-  right: 10px; /* Rightmost position */
+  top: 10px; /* Top position */
+  right: 10px;
   z-index: 1000;
 }
 
