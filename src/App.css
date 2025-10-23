@@ -18,13 +18,13 @@
 .auth-page {
   display: flex;
   justify-content: center;
-  align-items: center;
-  height: 100vh;
-  height: 100dvh; /* Dynamic viewport height for better mobile support */
+  align-items: flex-start;
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for better mobile support */
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 1rem;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .auth-container {
@@ -35,6 +35,8 @@
   width: 100%;
   max-width: 400px;
   text-align: center;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 }
 
 .auth-container h1 {
@@ -44,8 +46,83 @@
 }
 
 .auth-container p {
-  margin: 0 0 2rem 0;
+  margin: 0 0 1rem 0;
   color: #666;
+}
+
+/* Instructions Section */
+.instructions-section {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.instructions-toggle {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.75rem;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #333;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.instructions-toggle:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.instructions-content {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.instructions-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #333;
+  line-height: 1.6;
+}
+
+.instructions-list li {
+  margin-bottom: 1rem;
+}
+
+.instructions-list li:last-child {
+  margin-bottom: 0;
+}
+
+.instructions-list a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.instructions-list a:hover {
+  text-decoration: underline;
+}
+
+.instruction-screenshot {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.instruction-screenshot img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .auth-form {
