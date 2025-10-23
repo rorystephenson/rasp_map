@@ -1,40 +1,30 @@
 /**
  * Favourites management utilities
- * Stores and retrieves favourite spot IDs from localStorage
+ * Stores and retrieves favourite spot IDs using StorageService
  * Provides reactive updates via custom events
  */
 
 import { useState, useEffect } from 'react';
+import { storageService } from '../services/StorageService';
 
-const FAVOURITES_KEY = 'favourite_spots';
+// Event for favourites changes
 const FAVOURITES_CHANGE_EVENT = 'favourites-changed';
 
 /**
- * Load favourite spot IDs from localStorage
+ * Load favourite spot IDs from storage service
  */
 export const loadFavourites = (): string[] => {
-  try {
-    const stored = localStorage.getItem(FAVOURITES_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.warn('Failed to load favourites:', error);
-  }
-  return [];
+  return storageService.getFavourites();
 };
 
 /**
- * Save favourite spot IDs to localStorage and notify listeners
+ * Save favourite spot IDs using storage service
+ * Dispatches change event to notify listeners
  */
 const saveFavourites = (favourites: string[]): void => {
-  try {
-    localStorage.setItem(FAVOURITES_KEY, JSON.stringify(favourites));
-    // Dispatch event to notify all listeners
-    window.dispatchEvent(new CustomEvent(FAVOURITES_CHANGE_EVENT));
-  } catch (error) {
-    console.warn('Failed to save favourites:', error);
-  }
+  storageService.setFavourites(favourites);
+  // Dispatch event to notify all listeners
+  window.dispatchEvent(new CustomEvent(FAVOURITES_CHANGE_EVENT));
 };
 
 /**

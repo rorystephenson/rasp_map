@@ -1,18 +1,7 @@
 import { AuthResponse, ForecastResponse, ForecastRegion } from './types';
+import { storageService } from '../services/StorageService';
 
 const BASE_URL = 'https://www.cumulus.it/php';
-const CACHE_KEY = 'forecast_locations_cache';
-const CACHE_ETAG_KEY = 'forecast_locations_etag';
-const CACHE_TIMESTAMP_KEY = 'forecast_locations_timestamp';
-const WINDGRAM_CACHE_PREFIX = 'windgram_cache_';
-const WINDGRAM_ETAG_PREFIX = 'windgram_etag_';
-const WINDGRAM_TIMESTAMP_PREFIX = 'windgram_timestamp_';
-
-interface CachedForecastData {
-  data: ForecastRegion[];
-  etag: string;
-  timestamp: number;
-}
 
 interface WindgramResponse {
   success: boolean;
@@ -24,55 +13,9 @@ class ApiClient {
   private token: string | null = null;
 
   constructor() {
-    this.token = localStorage.getItem('auth_token');
+    this.token = storageService.getAuthToken();
   }
 
-  private isCacheValid(): boolean {
-    const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
-    if (!timestamp) return false;
-    
-    const cacheTime = parseInt(timestamp, 10);
-    const now = Date.now();
-    const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-    
-    return (now - cacheTime) < oneDay;
-  }
-
-  private getCachedData(): CachedForecastData | null {
-    try {
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      const etag = localStorage.getItem(CACHE_ETAG_KEY);
-      const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
-      
-      if (cachedData && etag && timestamp) {
-        return {
-          data: JSON.parse(cachedData),
-          etag,
-          timestamp: parseInt(timestamp, 10)
-        };
-      }
-    } catch (error) {
-      console.warn('Failed to parse cached forecast data:', error);
-    }
-    return null;
-  }
-
-  private setCachedData(data: ForecastRegion[], etag: string): void {
-    try {
-      const timestamp = Date.now();
-      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-      localStorage.setItem(CACHE_ETAG_KEY, etag);
-      localStorage.setItem(CACHE_TIMESTAMP_KEY, timestamp.toString());
-    } catch (error) {
-      console.warn('Failed to cache forecast data:', error);
-    }
-  }
-
-  private clearCache(): void {
-    localStorage.removeItem(CACHE_KEY);
-    localStorage.removeItem(CACHE_ETAG_KEY);
-    localStorage.removeItem(CACHE_TIMESTAMP_KEY);
-  }
 
   async authenticate(userKey: string): Promise<AuthResponse> {
     try {
@@ -91,10 +34,10 @@ class ApiClient {
       }
 
       const text = await response.text();
-      
+
       if (text.trim() === 'OK') {
         this.token = userKey;
-        localStorage.setItem('auth_token', userKey);
+        storageService.setAuthToken(userKey);
         return { success: true, token: userKey };
       } else {
         return { success: false, error: 'Invalid authentication key' };
@@ -110,8 +53,8 @@ class ApiClient {
   async getForecastLocations(): Promise<ForecastResponse> {
     try {
       // Check if we have valid cached data
-      const cachedData = this.getCachedData();
-      if (cachedData && this.isCacheValid()) {
+      const cachedData = storageService.getCachedForecast();
+      if (cachedData && storageService.isForecastCacheValid()) {
         console.log('Using cached forecast data');
         return { success: true, data: cachedData.data };
       }
@@ -124,7 +67,7 @@ class ApiClient {
 
       // Note: Can't use If-None-Match header due to CORS restrictions
       // Relying on time-based caching instead
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers,
@@ -140,24 +83,24 @@ class ApiClient {
       }
 
       const data: ForecastRegion[] = await response.json();
-      
+
       // Cache the new data (no ETag due to CORS restrictions)
       const timestamp = Date.now().toString();
-      this.setCachedData(data, timestamp);
-      
+      storageService.setCachedForecast(data, timestamp);
+
       console.log('Fetched fresh forecast data and cached it');
       return { success: true, data };
     } catch (error) {
       // If we have cached data, use it as fallback on network errors
-      const cachedData = this.getCachedData();
+      const cachedData = storageService.getCachedForecast();
       if (cachedData) {
         console.warn('Network error, using cached data as fallback');
         return { success: true, data: cachedData.data };
       }
-      
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Network error' 
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error'
       };
     }
   }
@@ -168,9 +111,9 @@ class ApiClient {
 
   logout(): void {
     this.token = null;
-    localStorage.removeItem('auth_token');
+    storageService.clearAuthToken();
     // Optionally clear cache on logout
-    // this.clearCache();
+    // storageService.clearForecastCache();
   }
 
   clearAuthOnError(): void {
@@ -179,51 +122,25 @@ class ApiClient {
 
   // Method to manually clear cache if needed
   clearForecastCache(): void {
-    this.clearCache();
+    storageService.clearForecastCache();
   }
 
-  private getWindgramCacheKey(windgramId: string, day: number): string {
-    return `${WINDGRAM_CACHE_PREFIX}${windgramId}_${day}`;
-  }
-
-  private getWindgramEtagKey(windgramId: string, day: number): string {
-    return `${WINDGRAM_ETAG_PREFIX}${windgramId}_${day}`;
-  }
-
-  private getWindgramTimestampKey(windgramId: string, day: number): string {
-    return `${WINDGRAM_TIMESTAMP_PREFIX}${windgramId}_${day}`;
-  }
-
-  private isWindgramCacheValid(windgramId: string, day: number): boolean {
-    const timestamp = localStorage.getItem(this.getWindgramTimestampKey(windgramId, day));
-    if (!timestamp) return false;
-    
-    const cacheTime = parseInt(timestamp, 10);
-    const now = Date.now();
-    const sixHours = 6 * 60 * 60 * 1000; // 6 hours in milliseconds (windgrams update every few hours)
-    
-    return (now - cacheTime) < sixHours;
-  }
-
-  // Get windgram image with proper caching and ETag support
+  // Get windgram image with proper caching using server's Expires header
   async getWindgram(windgramId: string, day: number = 0): Promise<WindgramResponse> {
     if (!this.token) {
       return { success: false, error: 'Not authenticated' };
     }
-    
+
     if (day < 0 || day > 4) {
       return { success: false, error: 'Day must be between 0 and 4' };
     }
 
     try {
-      const cacheKey = this.getWindgramCacheKey(windgramId, day);
-      const timestampKey = this.getWindgramTimestampKey(windgramId, day);
-
       // Check if we have valid cached data
-      const cachedUrl = localStorage.getItem(cacheKey);
-      if (cachedUrl && this.isWindgramCacheValid(windgramId, day)) {
-        console.log(`Using cached windgram for ${windgramId}_${day}`);
-        return { success: true, imageUrl: cachedUrl };
+      const cached = storageService.getCachedWindgram(windgramId, day);
+      if (cached && storageService.isWindgramCacheValid(windgramId, day)) {
+        console.log(`Using cached windgram for ${windgramId} day ${day}`);
+        return { success: true, imageUrl: cached.url };
       }
 
       const params = new URLSearchParams({
@@ -239,39 +156,59 @@ class ApiClient {
         'Origin': 'https://mobilerasp-5b91a.web.app',
       };
 
-      // Note: Can't use If-None-Match header due to CORS restrictions
-      // Relying on time-based caching instead
-
       const response = await fetch(url, { headers });
 
       if (!response.ok) {
         // If we have cached data but got an error, use cached data as fallback
-        if (cachedUrl) {
-          console.warn(`Windgram API request failed for ${windgramId}_${day}, using cached data as fallback`);
-          return { success: true, imageUrl: cachedUrl };
+        if (cached) {
+          console.warn(`Windgram API request failed for ${windgramId} day ${day}, using cached data as fallback`);
+          return { success: true, imageUrl: cached.url };
         }
         return { success: false, error: `HTTP ${response.status}: ${response.statusText}` };
       }
 
-      // For images, we return the URL and cache it
-      // Cache the URL and metadata (no ETag due to CORS restrictions)
-      localStorage.setItem(cacheKey, url);
-      localStorage.setItem(timestampKey, Date.now().toString());
-      
-      console.log(`Fetched fresh windgram for ${windgramId}_${day} and cached it`);
+      // Parse cache headers from response
+      const expiresHeader = response.headers.get('expires');
+      const cacheControlHeader = response.headers.get('cache-control');
+      const lastModifiedHeader = response.headers.get('last-modified');
+
+      // Calculate expiration time
+      let expiresAt = Date.now() + (30 * 60 * 1000); // Default: 30 minutes
+
+      if (cacheControlHeader) {
+        const maxAgeMatch = cacheControlHeader.match(/max-age=(\d+)/);
+        if (maxAgeMatch) {
+          expiresAt = Date.now() + (parseInt(maxAgeMatch[1], 10) * 1000);
+        }
+      } else if (expiresHeader) {
+        const expiresDate = new Date(expiresHeader);
+        if (!isNaN(expiresDate.getTime())) {
+          expiresAt = expiresDate.getTime();
+        }
+      }
+
+      // Cache the windgram data
+      storageService.setCachedWindgram(windgramId, day, {
+        url,
+        expiresAt,
+        lastModified: lastModifiedHeader || undefined,
+        cachedAt: Date.now()
+      });
+
+      console.log(`Fetched fresh windgram for ${windgramId} day ${day} and cached until ${new Date(expiresAt).toISOString()}`);
       return { success: true, imageUrl: url };
 
     } catch (error) {
       // If we have cached data, use it as fallback on network errors
-      const cachedUrl = localStorage.getItem(this.getWindgramCacheKey(windgramId, day));
-      if (cachedUrl) {
-        console.warn(`Network error for windgram ${windgramId}_${day}, using cached data as fallback`);
-        return { success: true, imageUrl: cachedUrl };
+      const cached = storageService.getCachedWindgram(windgramId, day);
+      if (cached) {
+        console.warn(`Network error for windgram ${windgramId} day ${day}, using cached data as fallback`);
+        return { success: true, imageUrl: cached.url };
       }
-      
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Network error' 
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error'
       };
     }
   }

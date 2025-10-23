@@ -8,6 +8,7 @@ import { SpotOverlay } from './SpotOverlay';
 import { SearchOverlay } from './SearchOverlay';
 import { FavouritesOverlay } from './FavouritesOverlay';
 import { LogoutConfirmationOverlay } from './LogoutConfirmationOverlay';
+import { storageService, MapViewState } from '../services/StorageService';
 import 'leaflet/dist/leaflet.css';
 
 interface MapPageProps {
@@ -28,13 +29,6 @@ interface UserLocation {
   lng: number;
 }
 
-interface MapViewState {
-  center: [number, number];
-  zoom: number;
-  timestamp?: number; // Unix timestamp in milliseconds
-}
-
-const MAP_STATE_KEY = 'map_view_state';
 const DEFAULT_MAP_STATE: MapViewState = {
   center: [42.5, 12.5], // Center on Italy
   zoom: 6
@@ -47,45 +41,8 @@ const MAP_BOUNDS: [[number, number], [number, number]] = [
   [49.9639, 19.7863]  // Northeast corner (2 degrees extra buffer)
 ];
 
-// Helper functions for map state persistence
-const saveMapState = (state: MapViewState): void => {
-  const timestamp = Date.now();
-  const stateWithTimestamp = { ...state, timestamp };
-
-  try {
-    // Check if there's a newer save already in localStorage (from another tab)
-    const existing = localStorage.getItem(MAP_STATE_KEY);
-    if (existing) {
-      const existingState = JSON.parse(existing);
-      if (existingState.timestamp && existingState.timestamp > timestamp) {
-        // Skip save - another tab has a newer state
-        return;
-      }
-    }
-
-    localStorage.setItem(MAP_STATE_KEY, JSON.stringify(stateWithTimestamp));
-  } catch (error) {
-    console.warn('Failed to save map state:', error);
-  }
-};
-
-const loadMapState = (): MapViewState => {
-  try {
-    const saved = localStorage.getItem(MAP_STATE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Validate the loaded state
-      if (parsed.center && Array.isArray(parsed.center) &&
-          parsed.center.length === 2 &&
-          typeof parsed.zoom === 'number') {
-        return parsed;
-      }
-    }
-  } catch (error) {
-    console.warn('Failed to load map state:', error);
-  }
-  return DEFAULT_MAP_STATE;
-};
+// Load initial map state before component renders to avoid race conditions
+const INITIAL_MAP_STATE = storageService.getMapViewState() || DEFAULT_MAP_STATE;
 
 // Custom Leaflet control for location button
 interface LocationControlOptions {
@@ -184,7 +141,7 @@ const MapController: React.FC<{
 
       const zoom = map.getZoom();
       const center = map.getCenter();
-      const newState: MapViewState = {
+      const newState: Omit<MapViewState, 'timestamp'> = {
         center: [center.lat, center.lng],
         zoom: zoom
       };
@@ -215,9 +172,6 @@ const MapController: React.FC<{
   
   return null;
 };
-
-// Load initial map state before component renders to avoid race conditions
-const INITIAL_MAP_STATE = loadMapState();
 
 export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [regions, setRegions] = useState<ForecastRegion[]>([]);
@@ -273,9 +227,9 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isMenuOpen]);
 
-  const handleMapStateChange = useCallback((newState: MapViewState) => {
-    // Just save to localStorage, don't store in React state to avoid re-renders
-    saveMapState(newState);
+  const handleMapStateChange = useCallback((newState: Omit<MapViewState, 'timestamp'>) => {
+    // Just save to storage service, don't store in React state to avoid re-renders
+    storageService.setMapViewState(newState);
   }, []);
 
 

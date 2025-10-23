@@ -10,40 +10,28 @@
  * 2. Refresh the page
  */
 
-const FEATURE_FLAGS_KEY = 'feature_flags';
-
-interface FeatureFlags {
-  betaFeatures: boolean;
-}
+import { storageService, FeatureFlags } from '../services/StorageService';
 
 const DEFAULT_FLAGS: FeatureFlags = {
   betaFeatures: false,
 };
 
 /**
- * Load feature flags from localStorage
+ * Load feature flags from storage service
  */
 const loadFlags = (): FeatureFlags => {
-  try {
-    const stored = localStorage.getItem(FEATURE_FLAGS_KEY);
-    if (stored) {
-      return { ...DEFAULT_FLAGS, ...JSON.parse(stored) };
-    }
-  } catch (error) {
-    console.warn('Failed to load feature flags:', error);
+  const stored = storageService.getFeatureFlags();
+  if (stored) {
+    return { ...DEFAULT_FLAGS, ...stored };
   }
   return DEFAULT_FLAGS;
 };
 
 /**
- * Save feature flags to localStorage
+ * Save feature flags using storage service
  */
 const saveFlags = (flags: FeatureFlags): void => {
-  try {
-    localStorage.setItem(FEATURE_FLAGS_KEY, JSON.stringify(flags));
-  } catch (error) {
-    console.warn('Failed to save feature flags:', error);
-  }
+  storageService.setFeatureFlags(flags);
 };
 
 /**

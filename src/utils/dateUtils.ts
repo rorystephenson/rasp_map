@@ -3,7 +3,7 @@
  * Handles persistent day selection across app sessions
  */
 
-const SELECTED_DATE_KEY = 'selected_forecast_date';
+import { storageService } from '../services/StorageService';
 
 /**
  * Get today's date in YYYY-MM-DD format (local timezone)
@@ -77,33 +77,24 @@ export const getItalianDayAbbreviation = (dayOffset: number): string => {
 };
 
 /**
- * Save selected date to localStorage
+ * Save selected date using storage service
  */
 export const saveSelectedDate = (dayOffset: number): void => {
   const dateString = getDateForOffset(dayOffset);
-  try {
-    localStorage.setItem(SELECTED_DATE_KEY, dateString);
-  } catch (error) {
-    console.warn('Failed to save selected date:', error);
-  }
+  storageService.setSelectedDate(dateString);
 };
 
 /**
- * Load selected day offset from localStorage
+ * Load selected day offset from storage service
  * Returns null if no saved date, date is invalid, or date is out of range
  */
 export const loadSelectedDayOffset = (): number | null => {
-  try {
-    const savedDate = localStorage.getItem(SELECTED_DATE_KEY);
-    if (!savedDate) {
-      return null;
-    }
-    
-    return calculateDayOffset(savedDate);
-  } catch (error) {
-    console.warn('Failed to load selected date:', error);
+  const savedDate = storageService.getSelectedDate();
+  if (!savedDate) {
     return null;
   }
+
+  return calculateDayOffset(savedDate);
 };
 
 /**

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ForecastLocation, ForecastRegion, LocationWithRegion } from '../api/types';
 import { SearchService, SearchResult } from '../services/SearchService';
+import { storageService } from '../services/StorageService';
 import { useIsFavourite, toggleFavourite } from '../utils/favourites';
-
-const SEARCH_QUERY_KEY = 'search_query';
 
 interface SearchResultItemProps {
   location: LocationWithRegion;
@@ -79,13 +78,8 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
   onLocationView
 }) => {
   const [query, setQuery] = useState(() => {
-    // Load saved search query from localStorage
-    try {
-      return localStorage.getItem(SEARCH_QUERY_KEY) || '';
-    } catch (error) {
-      console.warn('Failed to load saved search query:', error);
-      return '';
-    }
+    // Load saved search query from storage service
+    return storageService.getSearchQuery();
   });
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searchService] = useState(() => new SearchService());
@@ -105,13 +99,9 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
     }
   }, [isOpen]);
 
-  // Save query to localStorage whenever it changes
+  // Save query to storage service whenever it changes
   useEffect(() => {
-    try {
-      localStorage.setItem(SEARCH_QUERY_KEY, query);
-    } catch (error) {
-      console.warn('Failed to save search query:', error);
-    }
+    storageService.setSearchQuery(query);
   }, [query]);
 
   // Perform search when query changes
