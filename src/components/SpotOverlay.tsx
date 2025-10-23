@@ -27,15 +27,15 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onCl
 
   useEffect(() => {
     if (location && isOpen) {
-      const loadWindgram = async () => {
+      const loadWindgram = () => {
         setWindgramUrl(''); // Clear previous image immediately
         setImageLoading(true);
         setImageError(false);
         
         try {
-          const result = await apiClient.getWindgram(location.windgram_id, selectedDay);
-          if (result.success && result.imageUrl) {
-            setWindgramUrl(result.imageUrl);
+          const result = apiClient.getWindgramUrl(location.windgram_id, selectedDay);
+          if (typeof result === 'string') {
+            setWindgramUrl(result);
           } else {
             setImageError(true);
             setImageLoading(false);

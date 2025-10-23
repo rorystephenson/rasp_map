@@ -16,8 +16,6 @@ const STORAGE_KEYS = {
   FORECAST_TIMESTAMP: 'forecast_locations_timestamp',
 } as const;
 
-// Prefix for windgram cache keys
-const WINDGRAM_CACHE_PREFIX = 'windgram_cache_';
 
 export interface MapViewState {
   center: [number, number];
@@ -33,13 +31,6 @@ export interface CachedForecastData {
   data: any; // ForecastRegion[] from api/types
   etag: string;
   timestamp: number;
-}
-
-export interface WindgramCacheData {
-  url: string;
-  expiresAt: number; // Unix timestamp from server's Expires header or max-age
-  lastModified?: string; // For potential If-Modified-Since support
-  cachedAt: number; // When we cached it
 }
 
 class StorageService {
@@ -374,89 +365,6 @@ class StorageService {
       localStorage.removeItem(STORAGE_KEYS.FORECAST_TIMESTAMP);
     } catch (error) {
       console.warn('Failed to clear forecast cache from localStorage:', error);
-    }
-  }
-
-  /**
-   * Calculate forecast date from day offset
-   * @param dayOffset 0 = today, 1 = tomorrow, etc.
-   */
-  private getForecastDate(dayOffset: number): string {
-    const date = new Date();
-    date.setDate(date.getDate() + dayOffset);
-    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
-  }
-
-  /**
-   * Get windgram cache key for a specific windgram and day offset
-   */
-  private getWindgramCacheKey(windgramId: string, dayOffset: number): string {
-    const forecastDate = this.getForecastDate(dayOffset);
-    return `${WINDGRAM_CACHE_PREFIX}${windgramId}_${forecastDate}`;
-  }
-
-  /**
-   * Get cached windgram data
-   * Returns null if no cache exists or if expired
-   */
-  getCachedWindgram(windgramId: string, dayOffset: number): WindgramCacheData | null {
-    try {
-      const key = this.getWindgramCacheKey(windgramId, dayOffset);
-      const cached = localStorage.getItem(key);
-      if (!cached) return null;
-
-      const parsed: WindgramCacheData = JSON.parse(cached);
-
-      // Validate structure
-      if (!parsed.url || !parsed.expiresAt || !parsed.cachedAt) {
-        console.warn(`Invalid windgram cache structure for ${windgramId}_${dayOffset}`);
-        return null;
-      }
-
-      return parsed;
-    } catch (error) {
-      console.warn(`Failed to load cached windgram for ${windgramId}_${dayOffset}:`, error);
-      return null;
-    }
-  }
-
-  /**
-   * Save cached windgram data with expiration from server
-   */
-  setCachedWindgram(windgramId: string, dayOffset: number, data: WindgramCacheData): void {
-    try {
-      const key = this.getWindgramCacheKey(windgramId, dayOffset);
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (error) {
-      console.warn(`Failed to save cached windgram for ${windgramId}_${dayOffset}:`, error);
-    }
-  }
-
-  /**
-   * Check if windgram cache is valid (not expired according to server's expiration)
-   */
-  isWindgramCacheValid(windgramId: string, dayOffset: number): boolean {
-    try {
-      const cached = this.getCachedWindgram(windgramId, dayOffset);
-      if (!cached) return false;
-
-      const now = Date.now();
-      return now < cached.expiresAt;
-    } catch (error) {
-      console.warn(`Failed to check windgram cache validity for ${windgramId}_${dayOffset}:`, error);
-      return false;
-    }
-  }
-
-  /**
-   * Clear a specific windgram cache
-   */
-  clearWindgramCache(windgramId: string, dayOffset: number): void {
-    try {
-      const key = this.getWindgramCacheKey(windgramId, dayOffset);
-      localStorage.removeItem(key);
-    } catch (error) {
-      console.warn(`Failed to clear windgram cache for ${windgramId}_${dayOffset}:`, error);
     }
   }
 }
