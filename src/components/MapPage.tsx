@@ -7,6 +7,7 @@ import { ForecastRegion, ForecastLocation } from '../api/types';
 import { SpotOverlay } from './SpotOverlay';
 import { SearchOverlay } from './SearchOverlay';
 import { FavouritesOverlay } from './FavouritesOverlay';
+import { LogoutConfirmationOverlay } from './LogoutConfirmationOverlay';
 import 'leaflet/dist/leaflet.css';
 
 interface MapPageProps {
@@ -230,12 +231,14 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFavouritesOpen, setIsFavouritesOpen] = useState(false);
   const [mapInstance, setMapInstance] = useState<any>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   useEffect(() => {
     const loadForecastLocations = async () => {
       try {
         const result = await apiClient.getForecastLocations();
-        
+
         if (result.success && result.data) {
           setRegions(result.data);
         } else {
@@ -254,6 +257,21 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
 
     loadForecastLocations();
   }, [onLogout]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.menu-container')) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isMenuOpen]);
 
   const handleMapStateChange = useCallback((newState: MapViewState) => {
     // Just save to localStorage, don't store in React state to avoid re-renders
@@ -305,6 +323,25 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
 
   const handleMapReady = useCallback((map: any) => {
     setMapInstance(map);
+  }, []);
+
+  const handleMenuClick = useCallback(() => {
+    setIsMenuOpen(prev => !prev);
+  }, []);
+
+  const handleLogoutClick = useCallback(() => {
+    setIsLogoutConfirmOpen(true);
+    setIsMenuOpen(false);
+  }, []);
+
+  const handleLogoutConfirm = useCallback(() => {
+    apiClient.logout();
+    onLogout();
+    setIsLogoutConfirmOpen(false);
+  }, [onLogout]);
+
+  const handleLogoutCancel = useCallback(() => {
+    setIsLogoutConfirmOpen(false);
   }, []);
 
   const getCurrentLocation = useCallback(() => {
@@ -498,6 +535,25 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
             <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
           </svg>
         </button>
+
+        <div className="menu-container">
+          <button onClick={handleMenuClick} className="menu-button-overlay" title="Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+          </button>
+
+          {isMenuOpen && (
+            <div className="menu-dropdown">
+              <button onClick={handleLogoutClick} className="menu-item">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                </svg>
+                Esci
+              </button>
+            </div>
+          )}
+        </div>
       </div>
       
       <SpotOverlay 
@@ -520,6 +576,12 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
         regions={regions}
         onLocationSelect={handleSearchLocationSelect}
         onLocationView={handleSearchLocationView}
+      />
+
+      <LogoutConfirmationOverlay
+        isOpen={isLogoutConfirmOpen}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
       />
     </div>
   );

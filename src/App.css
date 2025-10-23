@@ -211,7 +211,7 @@
 .search-button-overlay {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 60px; /* Position to the left of menu button */
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -237,7 +237,7 @@
 .favourites-button-overlay {
   position: absolute;
   top: 10px;
-  right: 60px; /* Position to the left of search button */
+  right: 110px; /* Position to the left of search button */
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -260,6 +260,70 @@
   box-shadow: 0 3px 8px rgba(231, 76, 60, 0.3);
 }
 
+.menu-container {
+  position: absolute;
+  top: 10px;
+  right: 10px; /* Rightmost position */
+  z-index: 1000;
+}
+
+.menu-button-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.menu-button-overlay:hover {
+  background: #f5f5f5;
+  color: #333;
+  border-color: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  min-width: 150px;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  font-size: 0.95rem;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.menu-item:hover {
+  background: #f5f5f5;
+}
+
+.menu-item svg {
+  flex-shrink: 0;
+}
+
 .logout-button {
   padding: 0.5rem 1rem;
   background: #dc3545;
@@ -272,6 +336,78 @@
 }
 
 .logout-button:hover {
+  background: #c82333;
+}
+
+/* Logout Confirmation Overlay */
+.logout-confirmation-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 20px;
+}
+
+.logout-confirmation-dialog {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logout-confirmation-dialog h2 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.logout-confirmation-dialog p {
+  margin: 0 0 2rem 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.logout-confirmation-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.logout-confirmation-cancel,
+.logout-confirmation-confirm {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-confirmation-cancel {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.logout-confirmation-cancel:hover {
+  background: #e0e0e0;
+}
+
+.logout-confirmation-confirm {
+  background: #dc3545;
+  color: white;
+}
+
+.logout-confirmation-confirm:hover {
   background: #c82333;
 }
 
