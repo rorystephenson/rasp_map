@@ -2,12 +2,9 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from 'react-leaflet';
 import { DivIcon, Control, DomUtil, DomEvent } from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
-import { apiClient } from '../api/client';
-import { ForecastRegion, ForecastLocation } from '../api/types';
-import { SpotOverlay } from './SpotOverlay';
-import { SearchOverlay } from './SearchOverlay';
-import { FavouritesOverlay } from './FavouritesOverlay';
-import { LogoutConfirmationOverlay } from './LogoutConfirmationOverlay';
+import { useLocation } from 'wouter';
+import { ForecastLocation } from '../api/types';
+import { useMapContext } from '../contexts/MapContext';
 import { storageService, MapViewState } from '../services/StorageService';
 import 'leaflet/dist/leaflet.css';
 
@@ -88,13 +85,11 @@ class LocationControl extends Control {
 
   private updateIcon() {
     if (!this.button) return;
-    
+
     const animationClass = this.isLocating ? 'location-pulse' : '';
+    this.button.className = animationClass;
     this.button.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="#333" style="display: block; margin: auto;">
-        <circle cx="12" cy="12" r="4" class="${animationClass}"/>
-        <path d="M13 4.069V2h-2v2.069A8.01 8.01 0 0 0 4.069 11H2v2h2.069A8.008 8.008 0 0 0 11 19.931V22h2v-2.069A8.007 8.007 0 0 0 19.931 13H22v-2h-2.069A8.008 8.008 0 0 0 13 4.069zM12 18c-3.309 0-6-2.691-6-6s2.691-6 6-6 6 2.691 6 6-2.691 6-6 6z"/>
-      </svg>
+      <img src="/location_icon.svg" alt="Location" width="18" height="18" style="display: block; margin: auto;" />
     `;
   }
 }
@@ -174,43 +169,12 @@ const MapController: React.FC<{
 };
 
 export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
-  const [regions, setRegions] = useState<ForecastRegion[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [, setLocation] = useLocation();
+  const { regions, setMapInstance, isLoading, error } = useMapContext();
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState<ForecastLocation | null>(null);
-  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isFavouritesOpen, setIsFavouritesOpen] = useState(false);
-  const [mapInstance, setMapInstance] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
-
-  useEffect(() => {
-    const loadForecastLocations = async () => {
-      try {
-        const result = await apiClient.getForecastLocations();
-
-        if (result.success && result.data) {
-          setRegions(result.data);
-        } else {
-          setError(result.error || 'Failed to load forecast locations');
-          if (result.error?.includes('401') || result.error?.includes('403')) {
-            apiClient.clearAuthOnError();
-            onLogout();
-          }
-        }
-      } catch (err) {
-        setError('Network error. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadForecastLocations();
-  }, [onLogout]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -233,70 +197,30 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   }, []);
 
 
-  const handleMarkerClick = useCallback((location: ForecastLocation) => {
-    setSelectedLocation(location);
-    setIsOverlayOpen(true);
-  }, []);
-
-  const handleSearchLocationSelect = useCallback((location: ForecastLocation) => {
-    // Animate map to location (main tap behavior)
-    if (mapInstance) {
-      const lat = parseFloat(location.coord.lat);
-      const lng = parseFloat(location.coord.lng);
-      mapInstance.setView([lat, lng], 12, { animate: true, duration: 1 });
-    }
-    // Don't open forecast overlay for main tap, just animate map
-  }, [mapInstance]);
-
-  const handleSearchLocationView = useCallback((location: ForecastLocation) => {
-    // Open forecast overlay but keep search open (eye icon tap)
-    setSelectedLocation(location);
-    setIsOverlayOpen(true);
-  }, []);
-
-  const handleCloseOverlay = useCallback(() => {
-    setIsOverlayOpen(false);
-    setSelectedLocation(null);
-  }, []);
+  const handleMarkerClick = useCallback((loc: ForecastLocation) => {
+    setLocation(`/spot/${loc.windgram_id}`);
+  }, [setLocation]);
 
   const handleSearchClick = useCallback(() => {
-    setIsSearchOpen(true);
-  }, []);
-
-  const handleCloseSearch = useCallback(() => {
-    setIsSearchOpen(false);
-  }, []);
+    setLocation('/search');
+  }, [setLocation]);
 
   const handleFavouritesClick = useCallback(() => {
-    setIsFavouritesOpen(true);
-  }, []);
-
-  const handleCloseFavourites = useCallback(() => {
-    setIsFavouritesOpen(false);
-  }, []);
+    setLocation('/favourites');
+  }, [setLocation]);
 
   const handleMapReady = useCallback((map: any) => {
     setMapInstance(map);
-  }, []);
+  }, [setMapInstance]);
 
   const handleMenuClick = useCallback(() => {
     setIsMenuOpen(prev => !prev);
   }, []);
 
   const handleLogoutClick = useCallback(() => {
-    setIsLogoutConfirmOpen(true);
+    setLocation('/logout');
     setIsMenuOpen(false);
-  }, []);
-
-  const handleLogoutConfirm = useCallback(() => {
-    apiClient.logout();
-    onLogout();
-    setIsLogoutConfirmOpen(false);
-  }, [onLogout]);
-
-  const handleLogoutCancel = useCallback(() => {
-    setIsLogoutConfirmOpen(false);
-  }, []);
+  }, [setLocation]);
 
   const getCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -479,64 +403,28 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
         </MapContainer>
 
         <button onClick={handleFavouritesClick} className="favourites-button-overlay" title="Preferiti">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
+          <img src="/heart_icon.svg" alt="Preferiti" width="20" height="20" />
         </button>
 
         <button onClick={handleSearchClick} className="search-button-overlay" title="Search locations">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-          </svg>
+          <img src="/search_icon.svg" alt="Search" width="20" height="20" />
         </button>
 
         <div className="menu-container">
           <button onClick={handleMenuClick} className="menu-button-overlay" title="Menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-            </svg>
+            <img src="/menu_icon.svg" alt="Menu" width="20" height="20" />
           </button>
 
           {isMenuOpen && (
             <div className="menu-dropdown">
               <button onClick={handleLogoutClick} className="menu-item">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-                </svg>
+                <img src="/logout_icon.svg" alt="Logout" width="18" height="18" />
                 Esci
               </button>
             </div>
           )}
         </div>
       </div>
-      
-      <SpotOverlay 
-        location={selectedLocation}
-        isOpen={isOverlayOpen}
-        onClose={handleCloseOverlay}
-      />
-      
-      <SearchOverlay
-        isOpen={isSearchOpen}
-        onClose={handleCloseSearch}
-        regions={regions}
-        onLocationSelect={handleSearchLocationSelect}
-        onLocationView={handleSearchLocationView}
-      />
-
-      <FavouritesOverlay
-        isOpen={isFavouritesOpen}
-        onClose={handleCloseFavourites}
-        regions={regions}
-        onLocationSelect={handleSearchLocationSelect}
-        onLocationView={handleSearchLocationView}
-      />
-
-      <LogoutConfirmationOverlay
-        isOpen={isLogoutConfirmOpen}
-        onConfirm={handleLogoutConfirm}
-        onCancel={handleLogoutCancel}
-      />
     </div>
   );
 };

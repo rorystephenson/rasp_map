@@ -14,6 +14,77 @@
   color: #666;
 }
 
+/* Base Overlay Styles */
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.overlay {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f9fa;
+}
+
+.overlay-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.overlay-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.overlay-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.overlay-close:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.overlay-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.close-icon-mobile {
+  display: none;
+}
+
 /* Auth Page Styles */
 .auth-page {
   display: flex;
@@ -340,37 +411,18 @@
 }
 
 /* Logout Confirmation Overlay */
-.logout-confirmation-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3000;
-  padding: 20px;
-}
-
+/* Logout Confirmation Overlay Specific Styles */
 .logout-confirmation-dialog {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   width: 90%;
   max-width: 400px;
-  padding: 2rem;
+}
+
+.logout-confirmation-content {
+  padding: 1rem 1.5rem 1.5rem;
   text-align: center;
 }
 
-.logout-confirmation-dialog h2 {
-  margin: 0 0 1rem 0;
-  color: #333;
-  font-size: 1.5rem;
-}
-
-.logout-confirmation-dialog p {
+.logout-confirmation-content p {
   margin: 0 0 2rem 0;
   color: #666;
   font-size: 1rem;
@@ -640,48 +692,12 @@
 }
 
 /* Search Overlay Styles */
-.search-overlay-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  z-index: 2000;
-  padding: 20px;
-}
-
+/* Search Overlay Specific Styles */
 .search-overlay {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: 90%;
   max-width: 600px;
   max-height: 80vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
-
-.search-overlay-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid #e5e5e5;
-  background: #f8f9fa;
-}
-
-.search-overlay-header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
 
 .search-overlay-content {
   padding: 1.5rem 0 0 1.5rem;
@@ -859,54 +875,12 @@
 }
 
 /* Spot Overlay Styles */
-.spot-overlay-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2100;
-  padding: 20px;
-}
-
+/* Spot Overlay Specific Styles */
 .spot-overlay {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: calc(100vh - 40px); /* Square based on viewport height minus padding */
   height: calc(100vh - 40px);
   max-width: calc(100vw - 40px); /* Don't exceed viewport width minus padding */
   max-height: calc(100vh - 40px);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.spot-overlay-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid #e5e5e5;
-  background: #f8f9fa;
-}
-
-.spot-overlay-header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 1.25rem;
-  font-weight: 600;
-  flex: 1;
-}
-
-.spot-overlay-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .favourite-toggle {
@@ -924,24 +898,6 @@
   transform: scale(1.1);
 }
 
-.spot-overlay-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #666;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.spot-overlay-close:hover {
-  background: #e9ecef;
-  color: #333;
-}
-
-.close-icon-mobile {
-  display: none;
-}
 
 .day-selector {
   display: flex;
@@ -1089,7 +1045,7 @@
   }
 
   /* Fullscreen overlay on mobile */
-  .spot-overlay-backdrop {
+  .overlay-backdrop {
     padding: 0;
   }
 
@@ -1203,10 +1159,6 @@
     max-width: none;
     max-height: none;
     border-radius: 0;
-  }
-  
-  .search-overlay-backdrop {
-    padding: 0;
   }
   
   /* Mobile search results should fill available space */

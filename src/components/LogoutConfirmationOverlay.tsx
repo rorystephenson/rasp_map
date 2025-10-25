@@ -1,32 +1,31 @@
 import React from 'react';
+import { Overlay } from './Overlay';
 
 interface LogoutConfirmationOverlayProps {
-  isOpen: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
+  onLogout: () => void;
 }
 
 export const LogoutConfirmationOverlay: React.FC<LogoutConfirmationOverlayProps> = ({
-  isOpen,
-  onConfirm,
-  onCancel
+  onLogout
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="logout-confirmation-backdrop" onClick={onCancel}>
-      <div className="logout-confirmation-dialog" onClick={(e) => e.stopPropagation()}>
-        <h2>Conferma uscita</h2>
+    <Overlay
+      title="Conferma uscita"
+      className="logout-confirmation-dialog"
+      zIndex={3000}
+      alignItems="center"
+    >
+      <div className="logout-confirmation-content">
         <p>Sei sicuro di voler uscire?</p>
         <div className="logout-confirmation-actions">
-          <button className="logout-confirmation-cancel" onClick={onCancel}>
+          <button className="logout-confirmation-cancel" onClick={() => window.history.back()}>
             Annulla
           </button>
-          <button className="logout-confirmation-confirm" onClick={onConfirm}>
+          <button className="logout-confirmation-confirm" onClick={onLogout}>
             Esci
           </button>
         </div>
       </div>
-    </div>
+    </Overlay>
   );
 };

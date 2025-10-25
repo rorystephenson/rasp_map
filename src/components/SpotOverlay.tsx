@@ -3,14 +3,13 @@ import { ForecastLocation } from '../api/types';
 import { apiClient } from '../api/client';
 import { getItalianDayAbbreviation, saveSelectedDate, getInitialDayOffset } from '../utils/dateUtils';
 import { toggleFavourite, useIsFavourite } from '../utils/favourites';
+import { Overlay } from './Overlay';
 
 interface SpotOverlayProps {
   location: ForecastLocation | null;
-  isOpen: boolean;
-  onClose: () => void;
 }
 
-export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onClose }) => {
+export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
   const [windgramUrl, setWindgramUrl] = useState<string>('');
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -18,15 +17,15 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onCl
   const isFavourited = useIsFavourite(location?.windgram_id);
 
   useEffect(() => {
-    if (location && isOpen) {
+    if (location) {
       // Load the persistent day selection when opening overlay
       const initialDay = getInitialDayOffset();
       setSelectedDay(initialDay);
     }
-  }, [location, isOpen]);
+  }, [location]);
 
   useEffect(() => {
-    if (location && isOpen) {
+    if (location) {
       const loadWindgram = () => {
         setWindgramUrl(''); // Clear previous image immediately
         setImageLoading(true);
@@ -49,7 +48,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onCl
 
       loadWindgram();
     }
-  }, [location, selectedDay, isOpen]);
+  }, [location, selectedDay]);
 
   const handleImageLoad = () => {
     setImageLoading(false);
@@ -67,51 +66,34 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onCl
     }
   };
 
-  if (!isOpen || !location) {
+  if (!location) {
     return null;
   }
 
   const lat = parseFloat(location.coord.lat);
   const lng = parseFloat(location.coord.lng);
 
-  return (
-    <div className="spot-overlay-backdrop" onClick={onClose}>
-      <div className="spot-overlay" onClick={(e) => e.stopPropagation()}>
-        <div className="spot-overlay-header">
-          <h2>{location.windgram_name}</h2>
-          <div className="spot-overlay-actions">
-            <button
-              className="favourite-toggle"
-              onClick={handleToggleFavourite}
-              title={isFavourited ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavourited ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <button className="spot-overlay-close" onClick={onClose}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="close-icon-desktop">
-                <path
-                  d="M18 6L6 18M6 6l12 12"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="close-icon-mobile">
-                <path
-                  d="M19 12H5M12 19l-7-7 7-7"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+  const favouriteButton = (
+    <button
+      className="favourite-toggle"
+      onClick={handleToggleFavourite}
+      title={isFavourited ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavourited ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </button>
+  );
 
+  return (
+    <Overlay
+      title={location.windgram_name}
+      className="spot-overlay"
+      actionButtons={favouriteButton}
+      zIndex={2100}
+      alignItems="center"
+    >
+      <>
         <div className="day-selector">
           {[0, 1, 2, 3, 4].map((day) => (
             <button
@@ -197,7 +179,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location, isOpen, onCl
             </a>
           </div>
         </div>
-      </div>
-    </div>
+      </>
+    </Overlay>
   );
 };
