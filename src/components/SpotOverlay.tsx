@@ -6,7 +6,7 @@ import { toggleFavourite, useIsFavourite } from '../utils/favourites';
 import { Overlay } from './Overlay';
 
 interface SpotOverlayProps {
-  location: ForecastLocation | null;
+  location: ForecastLocation;
 }
 
 export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
@@ -14,40 +14,38 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [selectedDay, setSelectedDay] = useState(() => getInitialDayOffset());
-  const isFavourited = useIsFavourite(location?.windgram_id);
+  const isFavourited = useIsFavourite(location.windgram_id);
 
   useEffect(() => {
-    if (location) {
-      // Load the persistent day selection when opening overlay
-      const initialDay = getInitialDayOffset();
-      setSelectedDay(initialDay);
-    }
+    // Load the persistent day selection when opening overlay
+    const initialDay = getInitialDayOffset();
+    setSelectedDay(initialDay);
+
   }, [location]);
 
   useEffect(() => {
-    if (location) {
-      const loadWindgram = () => {
-        setWindgramUrl(''); // Clear previous image immediately
-        setImageLoading(true);
-        setImageError(false);
-        
-        try {
-          const result = apiClient.getWindgramUrl(location.windgram_id, selectedDay);
-          if (typeof result === 'string') {
-            setWindgramUrl(result);
-          } else {
-            setImageError(true);
-            setImageLoading(false);
-          }
-        } catch (error) {
-          console.error('Failed to load windgram:', error);
+    const loadWindgram = () => {
+      setWindgramUrl(''); // Clear previous image immediately
+      setImageLoading(true);
+      setImageError(false);
+
+      try {
+        const result = apiClient.getWindgramUrl(location.windgram_id, selectedDay);
+        if (typeof result === 'string') {
+          setWindgramUrl(result);
+        } else {
           setImageError(true);
           setImageLoading(false);
         }
-      };
+      } catch (error) {
+        console.error('Failed to load windgram:', error);
+        setImageError(true);
+        setImageLoading(false);
+      }
+    };
 
-      loadWindgram();
-    }
+    loadWindgram();
+
   }, [location, selectedDay]);
 
   const handleImageLoad = () => {
@@ -60,15 +58,26 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
     setImageError(true);
   };
 
-  const handleToggleFavourite = () => {
-    if (location) {
-      toggleFavourite(location.windgram_id);
-    }
-  };
+  const handleRetry = () => {
+    setWindgramUrl('');
+    setImageLoading(true);
+    setImageError(false);
 
-  if (!location) {
-    return null;
-  }
+    try {
+      const result = apiClient.getWindgramUrl(location.windgram_id, selectedDay);
+      if (typeof result === 'string') {
+        setWindgramUrl(result);
+      } else {
+        setImageError(true);
+        setImageLoading(false);
+      }
+    } catch (error) {
+      console.error('Failed to load windgram:', error);
+      setImageError(true);
+      setImageLoading(false);
+    }
+
+  };
 
   const lat = parseFloat(location.coord.lat);
   const lng = parseFloat(location.coord.lng);
@@ -76,7 +85,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
   const favouriteButton = (
     <button
       className="favourite-toggle"
-      onClick={handleToggleFavourite}
+      onClick={() => toggleFavourite(location.windgram_id)}
       title={isFavourited ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
     >
       <img
@@ -125,6 +134,9 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
               <div className="windgram-error">
                 <p>Failed to load forecast image</p>
                 <p>Coordinates: {location.coord.lat}, {location.coord.lng}</p>
+                <button onClick={handleRetry} className="retry-button">
+                  Retry
+                </button>
               </div>
             )}
 
