@@ -79,9 +79,12 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
       onClick={handleToggleFavourite}
       title={isFavourited ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
     >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavourited ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
+      <img
+        src={isFavourited ? "/heart_filled_icon.svg" : "/heart_outline_icon.svg"}
+        alt={isFavourited ? "Remove from favourites" : "Add to favourites"}
+        width="24"
+        height="24"
+      />
     </button>
   );
 
@@ -152,11 +155,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
                 className="forecast-link-logo"
               />
               <span className="forecast-link-text">Windy Airgram</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="external-link-icon">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
+              <img src="/external_link_icon.svg" alt="External link" width="16" height="16" className="external-link-icon" />
             </a>
             <a
               href={`https://meteo-parapente.com/#/${lat},${lng},11`}
@@ -171,11 +170,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
                 className="forecast-link-logo meteo-logo"
               />
               <span className="forecast-link-text">Meteo-Parapente</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="external-link-icon">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
+              <img src="/external_link_icon.svg" alt="External link" width="16" height="16" className="external-link-icon" />
             </a>
           </div>
         </div>

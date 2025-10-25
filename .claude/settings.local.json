@@ -12,7 +12,9 @@
       "WebFetch(domain:community.windy.com)",
       "WebFetch(domain:api.windy.com)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(find:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

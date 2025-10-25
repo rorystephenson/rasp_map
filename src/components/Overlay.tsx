@@ -44,24 +44,8 @@ export const Overlay: React.FC<OverlayProps> = ({
               className="overlay-close"
               title="Chiudi"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="close-icon-desktop">
-                <path
-                  d="M18 6L6 18M6 6l12 12"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="close-icon-mobile">
-                <path
-                  d="M19 12H5M12 19l-7-7 7-7"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <img src="/close_icon.svg" alt="Close" width="24" height="24" className="close-icon-desktop" />
+              <img src="/back_icon.svg" alt="Back" width="24" height="24" className="close-icon-mobile" />
             </button>
           </div>
         </div>

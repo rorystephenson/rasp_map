@@ -35,31 +35,19 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ location, onLocatio
         onClick={handleToggleFavourite}
         title={isFavourited ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill={isFavourited ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        <img
+          src={isFavourited ? "/heart_filled_icon.svg" : "/heart_outline_icon.svg"}
+          alt={isFavourited ? "Remove from favourites" : "Add to favourites"}
+          width="20"
+          height="20"
+        />
       </button>
       <button
         className="search-result-view"
         onClick={() => onLocationView(location)}
         title="Mostra previsioni"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <circle
-            cx="12"
-            cy="12"
-            r="3"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-        </svg>
+        <img src="/eye_icon.svg" alt="View" width="20" height="20" />
       </button>
     </div>
   );

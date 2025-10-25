@@ -403,7 +403,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
         </MapContainer>
 
         <button onClick={handleFavouritesClick} className="favourites-button-overlay" title="Preferiti">
-          <img src="/heart_icon.svg" alt="Preferiti" width="20" height="20" />
+          <img src="/heart_filled_icon.svg" alt="Preferiti" width="20" height="20" />
         </button>
 
         <button onClick={handleSearchClick} className="search-button-overlay" title="Search locations">
