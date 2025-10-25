@@ -1,6 +1,7 @@
 {
   "short_name": "RASP Map",
   "name": "RASP Map",
+  "description": "Visualizza le previsioni meteo RASP per volo libero in Italia",
   "icons": [
     {
       "src": "windsock_favicon.svg",
