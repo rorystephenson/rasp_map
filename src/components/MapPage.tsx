@@ -6,6 +6,8 @@ import { useLocation } from 'wouter';
 import { ForecastLocation } from '../api/types';
 import { useMapContext } from '../contexts/MapContext';
 import { storageService, MapViewState } from '../services/StorageService';
+import { UserLocation } from '../services/GeolocationService';
+import { useGeolocation } from '../hooks/useGeolocation';
 import 'leaflet/dist/leaflet.css';
 
 interface MapPageProps {
@@ -20,11 +22,6 @@ const currentLocationIcon = new DivIcon({
   iconSize: [14, 14],
   iconAnchor: [7, 7],
 });
-
-interface UserLocation {
-  lat: number;
-  lng: number;
-}
 
 const DEFAULT_MAP_STATE: MapViewState = {
   center: [42.5, 12.5], // Center on Italy
@@ -171,9 +168,7 @@ const MapController: React.FC<{
 export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [, setLocation] = useLocation();
   const { regions, setMapInstance, isLoading, error } = useMapContext();
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [locationError, setLocationError] = useState('');
+  const { userLocation, isLocating, locationError, getCurrentLocation } = useGeolocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Close menu when clicking outside
@@ -197,78 +192,9 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   }, []);
 
 
-  const handleMarkerClick = useCallback((loc: ForecastLocation) => {
-    setLocation(`/spot/${loc.windgram_id}`);
-  }, [setLocation]);
-
-  const handleSearchClick = useCallback(() => {
-    setLocation('/search');
-  }, [setLocation]);
-
-  const handleFavouritesClick = useCallback(() => {
-    setLocation('/favourites');
-  }, [setLocation]);
-
   const handleMapReady = useCallback((map: any) => {
     setMapInstance(map);
   }, [setMapInstance]);
-
-  const handleMenuClick = useCallback(() => {
-    setIsMenuOpen(prev => !prev);
-  }, []);
-
-  const handleLogoutClick = useCallback(() => {
-    setLocation('/logout');
-    setIsMenuOpen(false);
-  }, [setLocation]);
-
-  const getCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by this browser');
-      return;
-    }
-
-    setIsLocating(true);
-    setLocationError('');
-
-    const options: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 300000, // 5 minutes
-    };
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-        setIsLocating(false);
-        setLocationError('');
-      },
-      (error) => {
-        setIsLocating(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setLocationError('Location access denied by user');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setLocationError('Location information unavailable');
-            break;
-          case error.TIMEOUT:
-            setLocationError('Location request timed out');
-            break;
-          default:
-            setLocationError('An unknown error occurred');
-            break;
-        }
-        
-        // Clear location error after 5 seconds
-        setTimeout(() => {
-          setLocationError('');
-        }, 5000);
-      },
-      options
-    );
-  }, []);
 
   const allLocations = useMemo((): ForecastLocation[] => {
     return regions.flatMap(region => region.windgram_list);
@@ -299,7 +225,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
           position={[parseFloat(location.coord.lat), parseFloat(location.coord.lng)]}
           icon={markerIcon}
           eventHandlers={{
-            click: () => handleMarkerClick(location)
+            click: () => setLocation(`/spot/${location.windgram_id}`)
           }}
         >
           <Tooltip
@@ -312,7 +238,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
           </Tooltip>
         </Marker>
       );
-    }), [allLocations, handleMarkerClick]
+    }), [allLocations, setLocation]
   );
 
   if (isLoading) {
@@ -402,22 +328,22 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
           </MarkerClusterGroup>
         </MapContainer>
 
-        <button onClick={handleFavouritesClick} className="favourites-button-overlay" title="Preferiti">
+        <button onClick={() => setLocation('/favourites')} className="favourites-button-overlay" title="Preferiti">
           <img src="/heart_filled_icon.svg" alt="Preferiti" width="20" height="20" />
         </button>
 
-        <button onClick={handleSearchClick} className="search-button-overlay" title="Search locations">
+        <button onClick={() => setLocation('/search')} className="search-button-overlay" title="Search locations">
           <img src="/search_icon.svg" alt="Search" width="20" height="20" />
         </button>
 
         <div className="menu-container">
-          <button onClick={handleMenuClick} className="menu-button-overlay" title="Menu">
+          <button onClick={() => setIsMenuOpen(prev => !prev)} className="menu-button-overlay" title="Menu">
             <img src="/menu_icon.svg" alt="Menu" width="20" height="20" />
           </button>
 
           {isMenuOpen && (
             <div className="menu-dropdown">
-              <button onClick={handleLogoutClick} className="menu-item">
+              <button onClick={() => { setLocation('/logout'); setIsMenuOpen(false); }} className="menu-item">
                 <img src="/logout_icon.svg" alt="Logout" width="18" height="18" />
                 Esci
               </button>

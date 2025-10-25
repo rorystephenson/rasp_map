@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Route, Router } from 'wouter';
+import { Route, Router, Redirect } from 'wouter';
 import './App.css';
 import { apiClient } from './api/client';
 import { AuthPage } from './components/AuthPage';
@@ -9,41 +9,6 @@ import { FavouritesOverlay } from './components/FavouritesOverlay';
 import { SpotOverlay } from './components/SpotOverlay';
 import { LogoutConfirmationOverlay } from './components/LogoutConfirmationOverlay';
 import { MapProvider, useMapContext } from './contexts/MapContext';
-
-function AuthenticatedApp({ onLogout }: { onLogout: () => void }) {
-  return (
-    <MapProvider onLogout={onLogout}>
-      <Route path="/" nest>
-        <MapPage onLogout={onLogout} />
-
-        {/* Nested overlay routes */}
-        <Route path="/search" nest>
-          <SearchOverlay />
-
-          <Route path="/spot/:windgramId">
-            {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
-          </Route>
-        </Route>
-
-        <Route path="/favourites" nest>
-          <FavouritesOverlay />
-
-          <Route path="/spot/:windgramId">
-            {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
-          </Route>
-        </Route>
-
-        <Route path="/spot/:windgramId">
-          {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
-        </Route>
-
-        <Route path="/logout">
-          <LogoutConfirmationOverlay onLogout={onLogout} />
-        </Route>
-      </Route>
-    </MapProvider>
-  );
-}
 
 // Wrapper to look up location from context
 function SpotOverlayWrapper({ windgramId }: { windgramId: string }) {
@@ -71,6 +36,7 @@ function App() {
   const handleLogout = () => {
     apiClient.logout();
     setIsAuthenticated(false);
+    // Navigation to /login will happen automatically via Redirect
   };
 
   if (isLoading) {
@@ -81,18 +47,56 @@ function App() {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="app">
-        <AuthPage onAuthSuccess={handleAuthSuccess} />
-      </div>
-    );
-  }
-
   return (
     <Router>
       <div className="app">
-        <AuthenticatedApp onLogout={handleLogout} />
+        {!isAuthenticated ? (
+          <>
+            <Route path="/login">
+              <AuthPage onAuthSuccess={handleAuthSuccess} />
+            </Route>
+            <Route path="/:rest*">
+              <Redirect to="/login" />
+            </Route>
+          </>
+        ) : (
+          <>
+            <Route path="/login">
+              <Redirect to="/" />
+            </Route>
+
+            <MapProvider onLogout={handleLogout}>
+              <Route path="/" nest>
+                <MapPage onLogout={handleLogout} />
+
+                {/* Nested overlay routes */}
+                <Route path="/search" nest>
+                  <SearchOverlay />
+
+                  <Route path="/spot/:windgramId">
+                    {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
+                  </Route>
+                </Route>
+
+                <Route path="/favourites" nest>
+                  <FavouritesOverlay />
+
+                  <Route path="/spot/:windgramId">
+                    {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
+                  </Route>
+                </Route>
+
+                <Route path="/spot/:windgramId">
+                  {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
+                </Route>
+
+                <Route path="/logout">
+                  <LogoutConfirmationOverlay onLogout={handleLogout} />
+                </Route>
+              </Route>
+            </MapProvider>
+          </>
+        )}
       </div>
     </Router>
   );
