@@ -8,7 +8,6 @@ interface OverlayProps {
   className?: string; // Optional additional class for the overlay container
   zIndex?: number; // Optional z-index for the backdrop
   alignItems?: 'center' | 'flex-start'; // Vertical alignment of overlay
-  onClose?: () => void; // Optional custom close handler
 }
 
 export const Overlay: React.FC<OverlayProps> = ({
@@ -18,18 +17,11 @@ export const Overlay: React.FC<OverlayProps> = ({
   className = '',
   zIndex = 2000,
   alignItems = 'center',
-  onClose
 }) => {
   const router = useRouter();
 
   // Use custom close handler if provided, otherwise use router's smart back
-  const handleClose = () => {
-    if (onClose) {
-      onClose();
-    } else {
-      router.back();
-    }
-  };
+  const handleClose = () => { router.back(); };
 
   return (
     <div
