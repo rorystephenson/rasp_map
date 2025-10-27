@@ -167,7 +167,7 @@ const MapController: React.FC<{
 
 export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [, setLocation] = useLocation();
-  const { regions, setMapInstance, isLoading, error } = useMapContext();
+  const { regions, setMapInstance, error } = useMapContext();
   const { userLocation, isLocating, locationError, getCurrentLocation } = useGeolocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -241,16 +241,6 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
     }), [allLocations, setLocation]
   );
 
-  if (isLoading) {
-    return (
-      <div className="map-loading">
-        <div className="loading-container">
-          <h2>Loading forecast locations...</h2>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="map-error">
@@ -264,7 +254,6 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
       </div>
     );
   }
-
 
   return (
     <div className="map-page">

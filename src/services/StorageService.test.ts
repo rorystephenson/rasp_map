@@ -680,52 +680,20 @@ describe('StorageService', () => {
 
     it('should save and retrieve forecast cache', () => {
       const testData = [{ id: 1, name: 'Test Region' }];
-      const etag = 'test-etag-123';
 
-      storageService.setCachedForecast(testData, etag);
+      storageService.setCachedForecast(testData);
       const cached = storageService.getCachedForecast();
 
       expect(cached).not.toBe(null);
       expect(cached?.data).toEqual(testData);
-      expect(cached?.etag).toBe(etag);
-      expect(cached?.timestamp).toBeGreaterThan(0);
-    });
-
-    it('should validate cache is less than 24 hours old', () => {
-      const testData = [{ id: 1, name: 'Test' }];
-      storageService.setCachedForecast(testData, 'etag');
-
-      expect(storageService.isForecastCacheValid()).toBe(true);
-    });
-
-    it('should return false for expired cache (25 hours old)', () => {
-      const testData = [{ id: 1, name: 'Test' }];
-      const oldTimestamp = Date.now() - (25 * 60 * 60 * 1000); // 25 hours ago
-
-      localStorageMock.setItem('forecast_locations_cache', JSON.stringify(testData));
-      localStorageMock.setItem('forecast_locations_etag', 'etag');
-      localStorageMock.setItem('forecast_locations_timestamp', oldTimestamp.toString());
-
-      expect(storageService.isForecastCacheValid()).toBe(false);
-    });
-
-    it('should return false for missing timestamp', () => {
-      expect(storageService.isForecastCacheValid()).toBe(false);
     });
 
     it('should clear forecast cache', () => {
       const testData = [{ id: 1, name: 'Test' }];
-      storageService.setCachedForecast(testData, 'etag');
+      storageService.setCachedForecast(testData);
 
       storageService.clearForecastCache();
 
-      expect(storageService.getCachedForecast()).toBe(null);
-      expect(storageService.isForecastCacheValid()).toBe(false);
-    });
-
-    it('should handle missing parts of cache data', () => {
-      // Only set data, missing etag and timestamp
-      localStorageMock.setItem('forecast_locations_cache', JSON.stringify([{ id: 1 }]));
       expect(storageService.getCachedForecast()).toBe(null);
     });
 
@@ -733,8 +701,6 @@ describe('StorageService', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
       localStorageMock.setItem('forecast_locations_cache', 'invalid json{');
-      localStorageMock.setItem('forecast_locations_etag', 'etag');
-      localStorageMock.setItem('forecast_locations_timestamp', Date.now().toString());
 
       expect(storageService.getCachedForecast()).toBe(null);
       expect(consoleWarnSpy).toHaveBeenCalled();
@@ -750,7 +716,6 @@ describe('StorageService', () => {
       };
 
       expect(storageService.getCachedForecast()).toBe(null);
-      expect(storageService.isForecastCacheValid()).toBe(false);
 
       localStorageMock.getItem = originalGetItem;
       consoleWarnSpy.mockRestore();

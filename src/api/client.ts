@@ -2,6 +2,7 @@ import { AuthResponse, ForecastResponse, ForecastRegion } from './types';
 import { storageService } from '../services/StorageService';
 
 const BASE_URL = 'https://www.cumulus.it/php';
+const REQUEST_ORIGIN = 'https://rasp.balanci.ng'
 
 class ApiClient {
   private token: string | null = null;
@@ -19,7 +20,7 @@ class ApiClient {
         method: 'GET',
         headers: {
           'Accept': '*/*',
-          'Origin': 'https://mobilerasp-5b91a.web.app',
+          'Origin': REQUEST_ORIGIN,
         },
       });
 
@@ -44,23 +45,62 @@ class ApiClient {
     }
   }
 
-  async getForecastLocations(): Promise<ForecastResponse> {
-    try {
-      // Check if we have valid cached data
-      const cachedData = storageService.getCachedForecast();
-      if (cachedData && storageService.isForecastCacheValid()) {
-        console.log('Using cached forecast data');
-        return { success: true, data: cachedData.data };
-      }
+  async getForecastLocations(onUpdate: (data: ForecastRegion[]) => void): Promise<ForecastResponse> {
+    // Load cache immediately if it exists (for fast initial render)
+    const cachedData = storageService.getCachedForecast();
 
+    if (cachedData) {
+      console.log('Returning cached forecast data immediately');
+
+      // Start background fetch to revalidate
+      this.revalidateForecastCache(cachedData, onUpdate);
+
+      return { success: true, data: cachedData };
+    }
+
+    // No cache - fetch from server and wait
+    return this.fetchFreshForecastLocations();
+  }
+
+  private async revalidateForecastCache(cachedData:  ForecastRegion[], onUpdate: ((data: ForecastRegion[]) => void)): Promise<void> {
+    const forecastLocationsResponse = await this.fetchForecastLocations();
+    const {success, data, error} = forecastLocationsResponse;
+
+    if (!success || !data) {
+      console.log(`Forecast data revalidation failed: ${error}`);
+      return;
+    }
+
+    // Compare with cache - only update if data has changed
+    const dataChanged = JSON.stringify(cachedData) !== JSON.stringify(data);
+    if (dataChanged) {
+      console.log('Forecast data changed during revalidation, updating cache');
+      storageService.setCachedForecast(data);
+      onUpdate(data);
+    } else {
+      console.log('Forecast data unchanged during revalidation');
+    }
+  }
+
+  private async fetchFreshForecastLocations(): Promise<ForecastResponse> {
+    const forecastLocationsResponse = await this.fetchForecastLocations();
+    const {success, data} = forecastLocationsResponse;
+
+    if (success && data) {
+      console.log('Caching fresh forecast data');
+      storageService.setCachedForecast(data);
+    }
+
+    return forecastLocationsResponse;
+  }
+
+  private async fetchForecastLocations(): Promise<ForecastResponse> {
+    try {
       const url = `${BASE_URL}/ajax.new.php?type=v-windgrams`;
       const headers: Record<string, string> = {
         'Accept': '*/*',
-        'Origin': 'https://mobilerasp-5b91a.web.app',
+        'Origin': REQUEST_ORIGIN,
       };
-
-      // Note: Can't use If-None-Match header due to CORS restrictions
-      // Relying on time-based caching instead
 
       const response = await fetch(url, {
         method: 'GET',
@@ -68,30 +108,13 @@ class ApiClient {
       });
 
       if (!response.ok) {
-        // If we have cached data but got an error, use cached data as fallback
-        if (cachedData) {
-          console.warn('API request failed, using cached data as fallback');
-          return { success: true, data: cachedData.data };
-        }
         return { success: false, error: `HTTP ${response.status}: ${response.statusText}` };
       }
 
-      const data: ForecastRegion[] = await response.json();
+      const freshData: ForecastRegion[] = await response.json();
 
-      // Cache the new data (no ETag due to CORS restrictions)
-      const timestamp = Date.now().toString();
-      storageService.setCachedForecast(data, timestamp);
-
-      console.log('Fetched fresh forecast data and cached it');
-      return { success: true, data };
+      return { success: true, data: freshData };
     } catch (error) {
-      // If we have cached data, use it as fallback on network errors
-      const cachedData = storageService.getCachedForecast();
-      if (cachedData) {
-        console.warn('Network error, using cached data as fallback');
-        return { success: true, data: cachedData.data };
-      }
-
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error'
@@ -106,21 +129,15 @@ class ApiClient {
   logout(): void {
     this.token = null;
     storageService.clearAuthToken();
-    // Optionally clear cache on logout
-    // storageService.clearForecastCache();
   }
 
   clearAuthOnError(): void {
     this.logout();
   }
 
-  // Method to manually clear cache if needed
-  clearForecastCache(): void {
-    storageService.clearForecastCache();
-  }
-
   // Get windgram image URL
   // Browser handles all caching via HTTP cache headers (Cache-Control, Expires, etc.)
+  // when this url is used with an <img> tag.
   getWindgramUrl(windgramId: string, day: number = 0): Error | String {
     if (!this.token) {
       return { name: 'Not authenticated', message: 'Must be logged in' };
@@ -130,8 +147,6 @@ class ApiClient {
       return { name: 'Invalid day', message: 'Day must be between 0 and 4' };
     }
 
-    // Simply construct and return the URL
-    // The browser's <img> tag will handle caching based on server's cache headers
     const params = new URLSearchParams({
       type: 'WINDGRAMS',
       key: this.token,
@@ -139,7 +154,7 @@ class ApiClient {
       day: day.toString()
     });
 
-    return`https://www.cumulus.it/rasp/publicwg.php?${params.toString()}`;
+    return `https://www.cumulus.it/rasp/publicwg.php?${params.toString()}`;
   }
 }
 

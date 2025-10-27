@@ -45,7 +45,9 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children, onLogout }) 
   useEffect(() => {
     const loadForecastLocations = async () => {
       try {
-        const result = await apiClient.getForecastLocations();
+        const result = await apiClient.getForecastLocations((updatedForecastLocations) => {
+          setRegions(updatedForecastLocations);
+        });
 
         if (result.success && result.data) {
           setRegions(result.data);
@@ -64,7 +66,7 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children, onLogout }) 
     };
 
     loadForecastLocations();
-  }, [onLogout]);
+  }, []);
 
   const value: MapContextType = {
     regions,

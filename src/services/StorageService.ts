@@ -12,8 +12,6 @@ const STORAGE_KEYS = {
   FEATURE_FLAGS: 'feature_flags',
   FAVOURITES: 'favourite_spots',
   FORECAST_CACHE: 'forecast_locations_cache',
-  FORECAST_ETAG: 'forecast_locations_etag',
-  FORECAST_TIMESTAMP: 'forecast_locations_timestamp',
 } as const;
 
 
@@ -25,12 +23,6 @@ export interface MapViewState {
 
 export interface FeatureFlags {
   betaFeatures: boolean;
-}
-
-export interface CachedForecastData {
-  data: any; // ForecastRegion[] from api/types
-  etag: string;
-  timestamp: number;
 }
 
 class StorageService {
@@ -298,22 +290,14 @@ class StorageService {
   }
 
   /**
-   * Get cached forecast data with etag and timestamp
+   * Get cached forecast data
    * Returns null if no cache exists or if parsing fails
    */
-  getCachedForecast(): CachedForecastData | null {
+  getCachedForecast(): any | null {
     try {
       const cachedData = localStorage.getItem(STORAGE_KEYS.FORECAST_CACHE);
-      const etag = localStorage.getItem(STORAGE_KEYS.FORECAST_ETAG);
-      const timestamp = localStorage.getItem(STORAGE_KEYS.FORECAST_TIMESTAMP);
-
-      if (cachedData && etag && timestamp) {
-        const parsed = JSON.parse(cachedData);
-        return {
-          data: parsed,
-          etag,
-          timestamp: parseInt(timestamp, 10)
-        };
+      if (cachedData) {
+        return JSON.parse(cachedData);
       }
       return null;
     } catch (error) {
@@ -323,35 +307,13 @@ class StorageService {
   }
 
   /**
-   * Save cached forecast data with etag and timestamp
+   * Save cached forecast data
    */
-  setCachedForecast(data: any, etag: string): void {
+  setCachedForecast(data: any): void {
     try {
-      const timestamp = Date.now();
       localStorage.setItem(STORAGE_KEYS.FORECAST_CACHE, JSON.stringify(data));
-      localStorage.setItem(STORAGE_KEYS.FORECAST_ETAG, etag);
-      localStorage.setItem(STORAGE_KEYS.FORECAST_TIMESTAMP, timestamp.toString());
     } catch (error) {
       console.warn('Failed to save cached forecast to localStorage:', error);
-    }
-  }
-
-  /**
-   * Check if forecast cache is valid (less than 24 hours old)
-   */
-  isForecastCacheValid(): boolean {
-    try {
-      const timestamp = localStorage.getItem(STORAGE_KEYS.FORECAST_TIMESTAMP);
-      if (!timestamp) return false;
-
-      const cacheTime = parseInt(timestamp, 10);
-      const now = Date.now();
-      const oneDay = 24 * 60 * 60 * 1000; // 24 hours
-
-      return (now - cacheTime) < oneDay;
-    } catch (error) {
-      console.warn('Failed to check forecast cache validity:', error);
-      return false;
     }
   }
 
@@ -361,8 +323,6 @@ class StorageService {
   clearForecastCache(): void {
     try {
       localStorage.removeItem(STORAGE_KEYS.FORECAST_CACHE);
-      localStorage.removeItem(STORAGE_KEYS.FORECAST_ETAG);
-      localStorage.removeItem(STORAGE_KEYS.FORECAST_TIMESTAMP);
     } catch (error) {
       console.warn('Failed to clear forecast cache from localStorage:', error);
     }

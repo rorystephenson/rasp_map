@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Deploy script for rasp-plus
+# Deploy script for rasp-map
 
 SERVER="root@168.119.191.119"
 APP_DIR="/app"
