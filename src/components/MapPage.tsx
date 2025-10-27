@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from 'react-leaflet';
 import { DivIcon, Control, DomUtil, DomEvent } from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
-import { useLocation } from 'wouter';
+import { useLocation } from '../router/RouterContext';
 import { ForecastLocation } from '../api/types';
 import { useMapContext } from '../contexts/MapContext';
 import { storageService, MapViewState } from '../services/StorageService';
@@ -225,7 +225,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
           position={[parseFloat(location.coord.lat), parseFloat(location.coord.lng)]}
           icon={markerIcon}
           eventHandlers={{
-            click: () => setLocation(`/spot/${location.windgram_id}`)
+            click: () => setLocation('/spot/:id', { params: { id: location.windgram_id } })
           }}
         >
           <Tooltip

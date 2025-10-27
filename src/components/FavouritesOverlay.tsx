@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation } from '../router/RouterContext';
 import { LocationWithRegion } from '../api/types';
 import { useFavourites } from '../utils/favourites';
 import { useMapContext } from '../contexts/MapContext';
@@ -55,9 +55,8 @@ export const FavouritesOverlay: React.FC = () => {
   };
 
   const handleLocationView = (location: LocationWithRegion) => {
-    // Navigate to spot overlay while keeping favourites open
-    // Use relative path within nested context
-    setLocation(`/spot/${location.windgram_id}`);
+    // Navigate to spot overlay from favourites context
+    setLocation('/favourites/spot/:id', { params: { id: location.windgram_id } });
   };
 
   return (

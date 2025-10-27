@@ -1,36 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { ForecastLocation } from '../api/types';
 import { apiClient } from '../api/client';
 import { getItalianDayAbbreviation, saveSelectedDate, getInitialDayOffset } from '../utils/dateUtils';
 import { toggleFavourite, useIsFavourite } from '../utils/favourites';
 import { Overlay } from './Overlay';
+import { useMapContext } from '../contexts/MapContext';
 
 interface SpotOverlayProps {
-  location: ForecastLocation;
+  windgramId: string;
 }
 
-export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
+export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
+  const { findLocationById } = useMapContext();
+  const location = findLocationById(windgramId);
+
   const [windgramUrl, setWindgramUrl] = useState<string>('');
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [selectedDay, setSelectedDay] = useState(() => getInitialDayOffset());
-  const isFavourited = useIsFavourite(location.windgram_id);
+  const isFavourited = useIsFavourite(windgramId);
 
   useEffect(() => {
     // Load the persistent day selection when opening overlay
     const initialDay = getInitialDayOffset();
     setSelectedDay(initialDay);
-
-  }, [location]);
+  }, [windgramId]);
 
   useEffect(() => {
+    if (!location) return;
+
     const loadWindgram = () => {
       setWindgramUrl(''); // Clear previous image immediately
       setImageLoading(true);
       setImageError(false);
 
       try {
-        const result = apiClient.getWindgramUrl(location.windgram_id, selectedDay);
+        const result = apiClient.getWindgramUrl(windgramId, selectedDay);
         if (typeof result === 'string') {
           setWindgramUrl(result);
         } else {
@@ -45,8 +49,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
     };
 
     loadWindgram();
-
-  }, [location, selectedDay]);
+  }, [location, windgramId, selectedDay]);
 
   const handleImageLoad = () => {
     setImageLoading(false);
@@ -64,7 +67,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
     setImageError(false);
 
     try {
-      const result = apiClient.getWindgramUrl(location.windgram_id, selectedDay);
+      const result = apiClient.getWindgramUrl(windgramId, selectedDay);
       if (typeof result === 'string') {
         setWindgramUrl(result);
       } else {
@@ -76,8 +79,23 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
       setImageError(true);
       setImageLoading(false);
     }
-
   };
+
+  if (!location) {
+    return (
+      <Overlay
+        title="Errore"
+        className="spot-error-overlay"
+        zIndex={2100}
+        alignItems="center"
+      >
+        <div className="windgram-error">
+          <p>Spot non trovato</p>
+          <p>ID: {windgramId}</p>
+        </div>
+      </Overlay>
+    );
+  }
 
   const lat = parseFloat(location.coord.lat);
   const lng = parseFloat(location.coord.lng);
@@ -85,7 +103,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ location }) => {
   const favouriteButton = (
     <button
       className="favourite-toggle"
-      onClick={() => toggleFavourite(location.windgram_id)}
+      onClick={() => toggleFavourite(windgramId)}
       title={isFavourited ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
     >
       <img

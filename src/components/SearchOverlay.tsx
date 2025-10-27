@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation } from '../router/RouterContext';
 import { LocationWithRegion } from '../api/types';
 import { SearchService, SearchResult } from '../services/SearchService';
 import { storageService } from '../services/StorageService';
@@ -111,9 +111,8 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = () => {
   };
 
   const handleLocationView = (location: LocationWithRegion) => {
-    // Navigate to spot overlay while keeping search open
-    // Use relative path within nested context
-    setLocation(`/spot/${location.windgram_id}`);
+    // Navigate to spot overlay from search context
+    setLocation('/search/spot/:id', { params: { id: location.windgram_id } });
   };
 
   return (
