@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Route, Router, Redirect } from 'wouter';
+import { useState } from 'react';
+import { Route, Router } from 'wouter';
 import './App.css';
 import { apiClient } from './api/client';
 import { AuthPage } from './components/AuthPage';
@@ -21,82 +21,50 @@ function SpotOverlayWrapper({ windgramId }: { windgramId: string }) {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    setIsAuthenticated(apiClient.isAuthenticated());
-    setIsLoading(false);
-  }, []);
-
-  const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
-  };
+  const [isAuthenticated, setIsAuthenticated] = useState(apiClient.isAuthenticated());
 
   const handleLogout = () => {
     apiClient.logout();
     setIsAuthenticated(false);
-    // Navigation to /login will happen automatically via Redirect
   };
 
-  if (isLoading) {
-    return (
-      <div className="app-loading">
-        Loading...
-      </div>
-    );
+  if (!isAuthenticated) {
+    return <AuthPage onAuthSuccess={() => setIsAuthenticated(true)} />;
   }
 
   return (
     <Router>
       <div className="app">
-        {!isAuthenticated ? (
-          <>
-            <Route path="/login">
-              <AuthPage onAuthSuccess={handleAuthSuccess} />
-            </Route>
-            <Route path="/:rest*">
-              <Redirect to="/login" />
-            </Route>
-          </>
-        ) : (
-          <>
-            <Route path="/login">
-              <Redirect to="/" />
-            </Route>
+        <MapProvider onLogout={handleLogout}>
+          <Route path="/" nest>
+            <MapPage onLogout={handleLogout} />
 
-            <MapProvider onLogout={handleLogout}>
-              <Route path="/" nest>
-                <MapPage onLogout={handleLogout} />
+            {/* Nested overlay routes */}
+            <Route path="/search" nest>
+              <SearchOverlay />
 
-                {/* Nested overlay routes */}
-                <Route path="/search" nest>
-                  <SearchOverlay />
-
-                  <Route path="/spot/:windgramId">
-                    {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
-                  </Route>
-                </Route>
-
-                <Route path="/favourites" nest>
-                  <FavouritesOverlay />
-
-                  <Route path="/spot/:windgramId">
-                    {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
-                  </Route>
-                </Route>
-
-                <Route path="/spot/:windgramId">
-                  {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
-                </Route>
-
-                <Route path="/logout">
-                  <LogoutConfirmationOverlay onLogout={handleLogout} />
-                </Route>
+              <Route path="/spot/:windgramId">
+                {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
               </Route>
-            </MapProvider>
-          </>
-        )}
+            </Route>
+
+            <Route path="/favourites" nest>
+              <FavouritesOverlay />
+
+              <Route path="/spot/:windgramId">
+                {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
+              </Route>
+            </Route>
+
+            <Route path="/spot/:windgramId">
+              {(params) => <SpotOverlayWrapper windgramId={params.windgramId} />}
+            </Route>
+
+            <Route path="/logout">
+              <LogoutConfirmationOverlay onLogout={handleLogout} />
+            </Route>
+          </Route>
+        </MapProvider>
       </div>
     </Router>
   );

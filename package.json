@@ -49,5 +49,10 @@
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.20"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(wouter)/)"
+    ]
   }
 }
