@@ -1,29 +1,29 @@
 {
-  "short_name": "RASP Map",
   "name": "RASP Map",
+  "start_url": "/",
+  "display": "standalone",
+  "short_name": "RASP Map",
   "description": "Visualizza le previsioni meteo RASP per volo libero in Italia",
+  "background_color": "#fff",
+  "theme_color": "#fff",
   "icons": [
     {
-      "src": "windsock_favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "purpose": "maskable",
+      "sizes": "1024x1024",
+      "src": "/1024x1024.png",
+      "type": "image/png"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
+      "purpose": "maskable",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "src": "/192x192.png",
+      "type": "image/png"
     },
     {
-      "src": "logo512.png",
-      "type": "image/png",
+      "purpose": "maskable",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "src": "/512x512.png",
+      "type": "image/png"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#667eea",
-  "background_color": "#ffffff"
+  ]
 }
