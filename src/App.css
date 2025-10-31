@@ -486,6 +486,81 @@
   50% { opacity: 0.3; }
 }
 
+/* Flash component - base styles */
+.flash-normal,
+.flash-error {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  max-width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Flash normal variant (info/loading) */
+.flash-normal {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.flash-normal-button {
+  padding: 0.5rem 1rem;
+  background-color: #0c5460;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.flash-normal-button:hover {
+  background-color: #094350;
+}
+
+.flash-normal-button:active {
+  background-color: #073540;
+}
+
+/* Flash error variant */
+.flash-error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.flash-error-button {
+  padding: 0.5rem 1rem;
+  background-color: #721c24;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.flash-error-button:hover {
+  background-color: #5a0f19;
+}
+
+.flash-error-button:active {
+  background-color: #4a0c15;
+}
+
+/* Legacy class names for backwards compatibility */
 .location-error {
   position: absolute;
   top: 10px;

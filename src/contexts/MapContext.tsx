@@ -9,6 +9,7 @@ interface MapContextType {
   error: string | null;
   setMapInstance: (instance: any) => void;
   findLocationById: (id: string) => ForecastLocation | null;
+  retryLoad: () => void;
 }
 
 const MapContext = createContext<MapContextType | undefined>(undefined);
@@ -42,31 +43,29 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children, onLogout }) 
     return null;
   }, [regions]);
 
-  useEffect(() => {
-    const loadForecastLocations = async () => {
-      try {
-        const result = await apiClient.getForecastLocations((updatedForecastLocations) => {
-          setRegions(updatedForecastLocations);
-        });
+  const loadForecastLocations = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await apiClient.getForecastLocations((updatedForecastLocations) => {
+        setRegions(updatedForecastLocations);
+      });
 
-        if (result.success && result.data) {
-          setRegions(result.data);
-        } else {
-          setError(result.error || 'Failed to load forecast locations');
-          if (result.error?.includes('401') || result.error?.includes('403')) {
-            apiClient.clearAuthOnError();
-            onLogout();
-          }
-        }
-      } catch (err) {
-        setError('Network error. Please try again.');
-      } finally {
-        setIsLoading(false);
+      if (result.success && result.data) {
+        setRegions(result.data);
+        setError(null); // Only clear error on success
+      } else {
+        setError(result.error || 'Impossibile caricare le località');
       }
-    };
-
-    loadForecastLocations();
+    } catch (err) {
+      setError('Errore di rete. Riprova.');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadForecastLocations();
+  }, [loadForecastLocations]);
 
   const value: MapContextType = {
     regions,
@@ -74,7 +73,8 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children, onLogout }) 
     isLoading,
     error,
     setMapInstance,
-    findLocationById
+    findLocationById,
+    retryLoad: loadForecastLocations
   };
 
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

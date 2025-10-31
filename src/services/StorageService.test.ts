@@ -685,7 +685,7 @@ describe('StorageService', () => {
       const cached = storageService.getCachedForecast();
 
       expect(cached).not.toBe(null);
-      expect(cached?.data).toEqual(testData);
+      expect(cached).toEqual(testData);
     });
 
     it('should clear forecast cache', () => {

@@ -8,6 +8,7 @@ import { useMapContext } from '../contexts/MapContext';
 import { storageService, MapViewState } from '../services/StorageService';
 import { UserLocation } from '../services/GeolocationService';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { Flash } from './Flash';
 import 'leaflet/dist/leaflet.css';
 
 interface MapPageProps {
@@ -167,7 +168,7 @@ const MapController: React.FC<{
 
 export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
   const [, setLocation] = useLocation();
-  const { regions, setMapInstance, error } = useMapContext();
+  const { regions, setMapInstance, error, isLoading, retryLoad } = useMapContext();
   const { userLocation, isLocating, locationError, getCurrentLocation } = useGeolocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -241,27 +242,24 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
     }), [allLocations, setLocation]
   );
 
-  if (error) {
-    return (
-      <div className="map-error">
-        <div className="error-container">
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button onClick={onLogout} className="logout-button">
-            Sign Out
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  // Always render the map, show status overlays as needed
   return (
     <div className="map-page">
-      {locationError && (
-        <div className="location-error">
-          {locationError}
-        </div>
+      {/* Scenario 1: Loading with no data - show loading spinner overlay */}
+      {isLoading && regions.length === 0 && (
+        <Flash message="Caricamento località..." variant="normal" />
       )}
+
+      {/* Scenario 2: Load failed with no data - show error with retry overlay */}
+      {error && regions.length === 0 && !isLoading && (
+        <Flash message={error} onRetry={retryLoad} variant="error" />
+      )}
+
+      {/* Location error (geolocation) */}
+      {locationError && <Flash message={locationError} variant="error" />}
+
+      {/* Scenarios 3 & 4: We have data (either from cache or successful load)
+          If there's an error but we have cached data, we silently ignore it */}
 
       <div className="map-container">
         <MapContainer
