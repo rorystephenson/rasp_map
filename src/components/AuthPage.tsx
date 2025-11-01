@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { apiClient } from '../api/client';
+import { useI18n } from '../i18n/I18nContext';
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
+  const { t } = useI18n();
   const [userKey, setUserKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,7 +16,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userKey.trim()) {
-      setError('Inserisci la tua chiave di autenticazione');
+      setError(t('auth.errorEmpty'));
       return;
     }
 
@@ -23,14 +25,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
 
     try {
       const result = await apiClient.authenticate(userKey.trim());
-      
+
       if (result.success) {
         onAuthSuccess();
       } else {
-        setError(result.error || 'Autenticazione fallita');
+        setError(result.error || t('auth.errorFailed'));
       }
     } catch (err) {
-      setError('Errore di rete. Riprova.');
+      setError(t('auth.errorNetwork'));
     } finally {
       setIsLoading(false);
     }
@@ -39,8 +41,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   return (
     <div className="auth-page">
       <div className="auth-container">
-        <h1>RASP Map</h1>
-        <p>Inserisci la tua chiave di autenticazione per accedere alle previsioni parapendio</p>
+        <h1>{t('auth.title')}</h1>
+        <p>{t('auth.description')}</p>
 
         <div className="instructions-section">
           <button
@@ -48,29 +50,29 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
             className="instructions-toggle"
             onClick={() => setIsInstructionsOpen(!isInstructionsOpen)}
           >
-            {isInstructionsOpen ? '▼' : '▶'} Come ottenere la chiave di accesso
+            {isInstructionsOpen ? '▼' : '▶'} {t('auth.howToGetKey')}
           </button>
 
           {isInstructionsOpen && (
             <div className="instructions-content">
               <ol className="instructions-list">
                 <li>
-                  Accedi al sito <a href="https://www.fivl.it/index.php/user-login" target="_blank" rel="noopener noreferrer">fivl.it</a>
+                  {t('auth.instructions.step1')} <a href="https://www.fivl.it/index.php/user-login" target="_blank" rel="noopener noreferrer">fivl.it</a>
                 </li>
                 <li>
-                  Nel menu vai a "Meteo → Consulta il servizio meteo" (<a href="https://www.fivl.it/index.php/blipmaps" target="_blank" rel="noopener noreferrer">link diretto</a>)
+                  {t('auth.instructions.step2')} (<a href="https://www.fivl.it/index.php/blipmaps" target="_blank" rel="noopener noreferrer">link diretto</a>)
                 </li>
                 <li>
-                  Seleziona l'icona del telefono e nel popup che si apre scegli "Richiedi istruzioni e chiavi di attivazione"
+                  {t('auth.instructions.step3')}
                   <div className="instruction-screenshot">
-                    <img src="/tutorial/tutorial_icon.png" alt="Icona telefono" />
-                    <img src="/tutorial/tutorial_button.png" alt="Popup richiesta chiave" />
+                    <img src="/tutorial/tutorial_icon.png" alt={t('ui.tutorialPhoneIcon')} />
+                    <img src="/tutorial/tutorial_button.png" alt={t('ui.tutorialPopup')} />
                   </div>
                 </li>
                 <li>
-                  Copia il codice in grassetto e incollalo nel campo qui sotto
+                  {t('auth.instructions.step4')}
                   <div className="instruction-screenshot">
-                    <img src="/tutorial/tutorial_key.png" alt="Codice di accesso" />
+                    <img src="/tutorial/tutorial_key.png" alt={t('ui.tutorialKey')} />
                   </div>
                 </li>
               </ol>
@@ -80,13 +82,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="userKey">Chiave di autenticazione:</label>
+            <label htmlFor="userKey">{t('auth.keyLabel')}</label>
             <input
               id="userKey"
               type="text"
               value={userKey}
               onChange={(e) => setUserKey(e.target.value)}
-              placeholder="XXXX-XXXX-XXXX-XXXX"
+              placeholder={t('auth.keyPlaceholder')}
               disabled={isLoading}
               className="auth-input"
             />
@@ -99,7 +101,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
             disabled={isLoading}
             className="auth-button"
           >
-            {isLoading ? 'Autenticazione...' : 'Accedi'}
+            {isLoading ? t('auth.submitting') : t('auth.submit')}
           </button>
         </form>
       </div>

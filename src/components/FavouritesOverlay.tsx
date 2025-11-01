@@ -3,10 +3,12 @@ import { useLocation } from '../router/RouterContext';
 import { LocationWithRegion } from '../api/types';
 import { useFavourites } from '../utils/favourites';
 import { useMapContext } from '../contexts/MapContext';
+import { useI18n } from '../i18n/I18nContext';
 import { Overlay } from './Overlay';
 
 
 export const FavouritesOverlay: React.FC = () => {
+  const { t } = useI18n();
   const [, setLocation] = useLocation();
   const { regions, mapInstance } = useMapContext();
   const favouriteIds = useFavourites();
@@ -61,7 +63,7 @@ export const FavouritesOverlay: React.FC = () => {
 
   return (
     <Overlay
-      title="Preferiti"
+      title={t('favourites.title')}
       className="search-overlay"
       alignItems="flex-start"
       zIndex={2000}
@@ -71,7 +73,7 @@ export const FavouritesOverlay: React.FC = () => {
           {favouriteLocations.length > 0 ? (
             <>
               <div className="search-results-header">
-                {favouriteLocations.length} preferit{favouriteLocations.length !== 1 ? 'i' : 'o'}
+                {t('favourites.count', { count: favouriteLocations.length })}
               </div>
               <div className="search-results-list">
                 {favouriteLocations.map((location) => (
@@ -86,9 +88,9 @@ export const FavouritesOverlay: React.FC = () => {
                     <button
                       className="search-result-view"
                       onClick={() => handleLocationView(location)}
-                      title="Mostra previsioni"
+                      title={t('search.viewForecast')}
                     >
-                      <img src="/eye_icon.svg" alt="View" width="20" height="20" />
+                      <img src="/eye_icon.svg" alt={t('search.viewForecast')} width="20" height="20" />
                     </button>
                   </div>
                 ))}
@@ -96,7 +98,7 @@ export const FavouritesOverlay: React.FC = () => {
             </>
           ) : (
             <div className="search-no-results">
-              <p>Nessun preferito salvato</p>
+              <p>{t('favourites.empty')}</p>
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import { SearchService, SearchResult } from '../services/SearchService';
 import { storageService } from '../services/StorageService';
 import { useIsFavourite, toggleFavourite } from '../utils/favourites';
 import { useMapContext } from '../contexts/MapContext';
+import { useI18n } from '../i18n/I18nContext';
 import { Overlay } from './Overlay';
 
 interface SearchResultItemProps {
@@ -14,6 +15,7 @@ interface SearchResultItemProps {
 }
 
 const SearchResultItem: React.FC<SearchResultItemProps> = ({ location, onLocationClick, onLocationView }) => {
+  const { t } = useI18n();
   const isFavourited = useIsFavourite(location.windgram_id);
 
   const handleToggleFavourite = (e: React.MouseEvent) => {
@@ -33,11 +35,11 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ location, onLocatio
       <button
         className="search-result-favourite"
         onClick={handleToggleFavourite}
-        title={isFavourited ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+        title={isFavourited ? t('favourites.remove') : t('favourites.add')}
       >
         <img
           src={isFavourited ? "/heart_filled_icon.svg" : "/heart_outline_icon.svg"}
-          alt={isFavourited ? "Remove from favourites" : "Add to favourites"}
+          alt={isFavourited ? t('favourites.remove') : t('favourites.add')}
           width="20"
           height="20"
         />
@@ -45,9 +47,9 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ location, onLocatio
       <button
         className="search-result-view"
         onClick={() => onLocationView(location)}
-        title="Mostra previsioni"
+        title={t('search.viewForecast')}
       >
-        <img src="/eye_icon.svg" alt="View" width="20" height="20" />
+        <img src="/eye_icon.svg" alt={t('search.viewForecast')} width="20" height="20" />
       </button>
     </div>
   );
@@ -57,6 +59,7 @@ interface SearchOverlayProps {
 }
 
 export const SearchOverlay: React.FC<SearchOverlayProps> = () => {
+  const { t } = useI18n();
   const [, setLocation] = useLocation();
   const { regions, mapInstance } = useMapContext();
   const [query, setQuery] = useState(() => {
@@ -117,7 +120,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = () => {
 
   return (
     <Overlay
-      title="Search Locations"
+      title={t('search.title')}
       className="search-overlay"
       alignItems="flex-start"
       zIndex={2000}
@@ -129,7 +132,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = () => {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search forecast locations..."
+            placeholder={t('search.placeholder')}
             className="search-input"
           />
         </div>
@@ -137,12 +140,12 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = () => {
         <div className="search-results">
           {query.trim() === '' ? (
             <div className="search-placeholder">
-              <p>Enter a location name to search {searchService.getLocationCount()} forecast locations</p>
+              <p>{t('search.emptyState', { count: searchService.getLocationCount() })}</p>
             </div>
           ) : results.length > 0 ? (
             <>
               <div className="search-results-header">
-                {results.length} result{results.length !== 1 ? 's' : ''} found
+                {t('search.resultsFound', { count: results.length })}
               </div>
               <div className="search-results-list">
                 {results.map(({ location }) => (
@@ -157,7 +160,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = () => {
             </>
           ) : (
             <div className="search-no-results">
-              <p>No locations found for "{query}"</p>
+              <p>{t('search.noResults', { query })}</p>
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { useRouter } from '../router/RouterContext';
+import { useI18n } from '../i18n/I18nContext';
 
 interface OverlayProps {
   title: string;
@@ -18,9 +19,9 @@ export const Overlay: React.FC<OverlayProps> = ({
   zIndex = 2000,
   alignItems = 'center',
 }) => {
+  const { t } = useI18n();
   const router = useRouter();
 
-  // Use custom close handler if provided, otherwise use router's smart back
   const handleClose = () => { router.back(); };
 
   return (
@@ -43,10 +44,10 @@ export const Overlay: React.FC<OverlayProps> = ({
             <button
               onClick={handleClose}
               className="overlay-close"
-              title="Chiudi"
+              title={t('ui.close')}
             >
-              <img src="/close_icon.svg" alt="Close" width="24" height="24" className="close-icon-desktop" />
-              <img src="/back_icon.svg" alt="Back" width="24" height="24" className="close-icon-mobile" />
+              <img src="/close_icon.svg" alt={t('ui.close')} width="24" height="24" className="close-icon-desktop" />
+              <img src="/back_icon.svg" alt={t('ui.back')} width="24" height="24" className="close-icon-mobile" />
             </button>
           </div>
         </div>

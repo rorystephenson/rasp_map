@@ -5,6 +5,7 @@ import MarkerClusterGroup from 'react-leaflet-cluster';
 import { useLocation } from '../router/RouterContext';
 import { ForecastLocation } from '../api/types';
 import { useMapContext } from '../contexts/MapContext';
+import { useI18n } from '../i18n/I18nContext';
 import { storageService, MapViewState } from '../services/StorageService';
 import { UserLocation } from '../services/GeolocationService';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -43,24 +44,30 @@ const INITIAL_MAP_STATE = storageService.getMapViewState() || DEFAULT_MAP_STATE;
 interface LocationControlOptions {
   onLocationClick: () => void;
   isLocating?: boolean;
+  locationText?: string;
+  locationAlt?: string;
 }
 
 class LocationControl extends Control {
   private onLocationClick: () => void;
   private isLocating: boolean = false;
   private button!: HTMLAnchorElement;
+  private locationText: string;
+  private locationAlt: string;
 
   constructor(options: LocationControlOptions) {
     super({ position: 'topleft' });
     this.onLocationClick = options.onLocationClick;
     this.isLocating = options.isLocating || false;
+    this.locationText = options.locationText || 'Go to my location';
+    this.locationAlt = options.locationAlt || 'Location';
   }
 
   onAdd() {
     const container = DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
     this.button = DomUtil.create('a', '', container);
     this.button.href = '#';
-    this.button.title = 'Go to my location';
+    this.button.title = this.locationText;
     this.updateIcon();
     this.button.style.width = '30px';
     this.button.style.height = '30px';
@@ -87,7 +94,7 @@ class LocationControl extends Control {
     const animationClass = this.isLocating ? 'location-pulse' : '';
     this.button.className = animationClass;
     this.button.innerHTML = `
-      <img src="/location_icon.svg" alt="Location" width="18" height="18" style="display: block; margin: auto;" />
+      <img src="/location_icon.svg" alt="${this.locationAlt}" width="18" height="18" style="display: block; margin: auto;" />
     `;
   }
 }
@@ -102,7 +109,9 @@ const MapController: React.FC<{
   onLocationRequest: () => void;
   isLocating: boolean;
   onMapReady?: (map: any) => void;
-}> = ({ userLocation, onMapStateChange, onLocationRequest, isLocating, onMapReady }) => {
+  locationText: string;
+  locationAlt: string;
+}> = ({ userLocation, onMapStateChange, onLocationRequest, isLocating, onMapReady, locationText, locationAlt }) => {
   const map = useMap();
 
   useEffect(() => {
@@ -152,21 +161,24 @@ const MapController: React.FC<{
   }, [map, onMapStateChange]);
 
   useEffect(() => {
-    const locationControl = new LocationControl({ 
+    const locationControl = new LocationControl({
       onLocationClick: onLocationRequest,
-      isLocating: isLocating 
+      isLocating: isLocating,
+      locationText: locationText,
+      locationAlt: locationAlt
     });
     map.addControl(locationControl);
 
     return () => {
       map.removeControl(locationControl);
     };
-  }, [map, onLocationRequest, isLocating]);
+  }, [map, onLocationRequest, isLocating, locationText, locationAlt]);
   
   return null;
 };
 
 export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
+  const { t } = useI18n();
   const [, setLocation] = useLocation();
   const { regions, setMapInstance, error, isLoading, retryLoad } = useMapContext();
   const { userLocation, isLocating, locationError, getCurrentLocation } = useGeolocation();
@@ -247,7 +259,7 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
     <div className="map-page">
       {/* Scenario 1: Loading with no data - show loading spinner overlay */}
       {isLoading && regions.length === 0 && (
-        <Flash message="Caricamento località..." variant="normal" />
+        <Flash message={t('map.loading')} variant="normal" />
       )}
 
       {/* Scenario 2: Load failed with no data - show error with retry overlay */}
@@ -275,6 +287,8 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
             onLocationRequest={getCurrentLocation}
             isLocating={isLocating}
             onMapReady={handleMapReady}
+            locationText={t('ui.location')}
+            locationAlt={t('ui.location')}
           />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -315,24 +329,24 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
           </MarkerClusterGroup>
         </MapContainer>
 
-        <button onClick={() => setLocation('/favourites')} className="favourites-button-overlay" title="Preferiti">
-          <img src="/heart_filled_icon.svg" alt="Preferiti" width="20" height="20" />
+        <button onClick={() => setLocation('/favourites')} className="favourites-button-overlay" title={t('map.favourites')}>
+          <img src="/heart_filled_icon.svg" alt={t('map.favourites')} width="20" height="20" />
         </button>
 
-        <button onClick={() => setLocation('/search')} className="search-button-overlay" title="Search locations">
-          <img src="/search_icon.svg" alt="Search" width="20" height="20" />
+        <button onClick={() => setLocation('/search')} className="search-button-overlay" title={t('map.search')}>
+          <img src="/search_icon.svg" alt={t('map.search')} width="20" height="20" />
         </button>
 
         <div className="menu-container">
-          <button onClick={() => setIsMenuOpen(prev => !prev)} className="menu-button-overlay" title="Menu">
-            <img src="/menu_icon.svg" alt="Menu" width="20" height="20" />
+          <button onClick={() => setIsMenuOpen(prev => !prev)} className="menu-button-overlay" title={t('map.menu')}>
+            <img src="/menu_icon.svg" alt={t('map.menu')} width="20" height="20" />
           </button>
 
           {isMenuOpen && (
             <div className="menu-dropdown">
               <button onClick={() => { setLocation('/logout'); setIsMenuOpen(false); }} className="menu-item">
-                <img src="/logout_icon.svg" alt="Logout" width="18" height="18" />
-                Esci
+                <img src="/logout_icon.svg" alt={t('map.logout')} width="18" height="18" />
+                {t('map.logout')}
               </button>
             </div>
           )}

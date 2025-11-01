@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
-import { getItalianDayAbbreviation, saveSelectedDate, getInitialDayOffset } from '../utils/dateUtils';
+import { getDayTranslationKey, saveSelectedDate, getInitialDayOffset } from '../utils/dateUtils';
 import { toggleFavourite, useIsFavourite } from '../utils/favourites';
+import { useI18n } from '../i18n/I18nContext';
 import { Overlay } from './Overlay';
 import { useMapContext } from '../contexts/MapContext';
 
@@ -10,6 +11,7 @@ interface SpotOverlayProps {
 }
 
 export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
+  const { t } = useI18n();
   const { findLocationById } = useMapContext();
   const location = findLocationById(windgramId);
 
@@ -84,13 +86,13 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
   if (!location) {
     return (
       <Overlay
-        title="Errore"
+        title={t('spot.error')}
         className="spot-error-overlay"
         zIndex={2100}
         alignItems="center"
       >
         <div className="windgram-error">
-          <p>Spot non trovato</p>
+          <p>{t('spot.notFound')}</p>
           <p>ID: {windgramId}</p>
         </div>
       </Overlay>
@@ -104,11 +106,11 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
     <button
       className="favourite-toggle"
       onClick={() => toggleFavourite(windgramId)}
-      title={isFavourited ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+      title={isFavourited ? t('favourites.remove') : t('favourites.add')}
     >
       <img
         src={isFavourited ? "/heart_filled_icon.svg" : "/heart_outline_icon.svg"}
-        alt={isFavourited ? "Remove from favourites" : "Add to favourites"}
+        alt={isFavourited ? t('favourites.remove') : t('favourites.add')}
         width="24"
         height="24"
       />
@@ -134,7 +136,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
                 saveSelectedDate(day); // Persist the selection
               }}
             >
-              {getItalianDayAbbreviation(day)}
+              {t(getDayTranslationKey(day))}
             </button>
           ))}
         </div>
@@ -144,16 +146,16 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
           <div className="spot-overlay-content">
             {imageLoading && (
               <div className="windgram-loading">
-                <p>Loading forecast...</p>
+                <p>{t('spot.loading')}</p>
               </div>
             )}
 
             {imageError && (
               <div className="windgram-error">
-                <p>Failed to load forecast image</p>
-                <p>Coordinates: {location.coord.lat}, {location.coord.lng}</p>
+                <p>{t('spot.loadError')}</p>
+                <p>{t('spot.coordinates', { lat: location.coord.lat, lng: location.coord.lng })}</p>
                 <button onClick={handleRetry} className="retry-button">
-                  Retry
+                  {t('spot.retry')}
                 </button>
               </div>
             )}
@@ -161,7 +163,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
             {windgramUrl && !imageError && (
               <img
                 src={windgramUrl}
-                alt={`Windgram for ${location.windgram_name}`}
+                alt={t('ui.windgramFor', { name: location.windgram_name })}
                 className="windgram-image"
                 onLoad={handleImageLoad}
                 onError={handleImageError}
@@ -177,7 +179,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
               target="_blank"
               rel="noopener noreferrer"
               className="external-forecast-link"
-              title="Open Airgram in Windy"
+              title={t('ui.openWindy')}
             >
               <img
                 src="/windy_logo.png"
@@ -185,14 +187,14 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
                 className="forecast-link-logo"
               />
               <span className="forecast-link-text">Windy Airgram</span>
-              <img src="/external_link_icon.svg" alt="External link" width="16" height="16" className="external-link-icon" />
+              <img src="/external_link_icon.svg" alt={t('ui.externalLink')} width="16" height="16" className="external-link-icon" />
             </a>
             <a
               href={`https://meteo-parapente.com/#/${lat},${lng},11`}
               target="_blank"
               rel="noopener noreferrer"
               className="external-forecast-link"
-              title="Open Meteo-Parapente"
+              title={t('ui.openMeteoParapente')}
             >
               <img
                 src="/meteo_parapente_logo.png"
@@ -200,7 +202,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
                 className="forecast-link-logo meteo-logo"
               />
               <span className="forecast-link-text">Meteo-Parapente</span>
-              <img src="/external_link_icon.svg" alt="External link" width="16" height="16" className="external-link-icon" />
+              <img src="/external_link_icon.svg" alt={t('ui.externalLink')} width="16" height="16" className="external-link-icon" />
             </a>
           </div>
         </div>

@@ -4,6 +4,7 @@
  */
 
 import { storageService } from '../services/StorageService';
+import { TranslationKey } from '../i18n/translations';
 
 /**
  * Get today's date in YYYY-MM-DD format (local timezone)
@@ -66,14 +67,14 @@ export const calculateDayOffset = (dateString: string): number | null => {
 };
 
 /**
- * Get Italian day abbreviation for a specific day offset
+ * Get day abbreviation translation key for a specific day offset
  */
-export const getItalianDayAbbreviation = (dayOffset: number): string => {
-  const italianDays = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+export const getDayTranslationKey = (dayOffset: number): TranslationKey => {
+  const dayKeys: TranslationKey[] = ['day.sun', 'day.mon', 'day.tue', 'day.wed', 'day.thu', 'day.fri', 'day.sat'];
   const today = new Date();
   const targetDate = new Date(today);
   targetDate.setDate(today.getDate() + dayOffset);
-  return italianDays[targetDate.getDay()];
+  return dayKeys[targetDate.getDay()];
 };
 
 /**

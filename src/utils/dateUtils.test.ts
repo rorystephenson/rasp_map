@@ -9,7 +9,7 @@ import {
   parseStringToDate,
   getDateForOffset,
   calculateDayOffset,
-  getItalianDayAbbreviation,
+  getDayTranslationKey,
   saveSelectedDate,
   loadSelectedDayOffset,
   getInitialDayOffset
@@ -173,28 +173,28 @@ describe('dateUtils', () => {
     });
   });
 
-  describe('getItalianDayAbbreviation', () => {
-    it('should return correct Italian abbreviations', () => {
+  describe('getDayTranslationKey', () => {
+    it('should return correct day keys for offsets', () => {
       jest.useFakeTimers();
       jest.setSystemTime(new Date(2023, 8, 11)); // Monday, September 11, 2023
-      
-      expect(getItalianDayAbbreviation(0)).toBe('Lun'); // Monday
-      expect(getItalianDayAbbreviation(1)).toBe('Mar'); // Tuesday
-      expect(getItalianDayAbbreviation(2)).toBe('Mer'); // Wednesday
-      expect(getItalianDayAbbreviation(3)).toBe('Gio'); // Thursday
-      expect(getItalianDayAbbreviation(4)).toBe('Ven'); // Friday
-      
+
+      expect(getDayTranslationKey(0)).toBe('day.mon'); // Monday (today)
+      expect(getDayTranslationKey(1)).toBe('day.tue'); // Tuesday
+      expect(getDayTranslationKey(2)).toBe('day.wed'); // Wednesday
+      expect(getDayTranslationKey(3)).toBe('day.thu'); // Thursday
+      expect(getDayTranslationKey(4)).toBe('day.fri'); // Friday
+
       jest.useRealTimers();
     });
 
     it('should handle week boundary crossing', () => {
       jest.useFakeTimers();
       jest.setSystemTime(new Date(2023, 8, 16)); // Saturday, September 16, 2023
-      
-      expect(getItalianDayAbbreviation(0)).toBe('Sab'); // Saturday
-      expect(getItalianDayAbbreviation(1)).toBe('Dom'); // Sunday
-      expect(getItalianDayAbbreviation(2)).toBe('Lun'); // Monday
-      
+
+      expect(getDayTranslationKey(0)).toBe('day.sat'); // Saturday (today)
+      expect(getDayTranslationKey(1)).toBe('day.sun'); // Sunday
+      expect(getDayTranslationKey(2)).toBe('day.mon'); // Monday
+
       jest.useRealTimers();
     });
   });

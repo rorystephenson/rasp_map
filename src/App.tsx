@@ -8,6 +8,7 @@ import { FavouritesOverlay } from './components/FavouritesOverlay';
 import { SpotOverlay } from './components/SpotOverlay';
 import { LogoutConfirmationOverlay } from './components/LogoutConfirmationOverlay';
 import { MapProvider } from './contexts/MapContext';
+import { I18nProvider } from './i18n/I18nContext';
 import { Router } from './router/Router';
 import { RouterProvider, useRoute } from './router/RouterContext';
 import { routes } from './router/routes';
@@ -49,9 +50,11 @@ function App() {
   const router = useMemo(() => new Router(routes), []);
 
   return (
-    <RouterProvider router={router}>
-      <AppContent />
-    </RouterProvider>
+    <I18nProvider>
+      <RouterProvider router={router}>
+        <AppContent />
+      </RouterProvider>
+    </I18nProvider>
   );
 }
 

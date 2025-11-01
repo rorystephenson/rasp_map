@@ -5,6 +5,7 @@
 import React from 'react';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { MapProvider, useMapContext } from './MapContext';
+import { I18nProvider } from '../i18n/I18nContext';
 import { apiClient } from '../api/client';
 import { ForecastRegion } from '../api/types';
 
@@ -32,7 +33,9 @@ describe('MapContext', () => {
   ];
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <MapProvider onLogout={mockOnLogout}>{children}</MapProvider>
+    <I18nProvider>
+      <MapProvider onLogout={mockOnLogout}>{children}</MapProvider>
+    </I18nProvider>
   );
 
   beforeEach(() => {
@@ -96,7 +99,7 @@ describe('MapContext', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.error).toBe('Impossibile caricare le località');
+    expect(result.current.error).toBe('Unable to load locations');
   });
 
   it('should handle exceptions during load', async () => {
@@ -111,7 +114,7 @@ describe('MapContext', () => {
     });
 
     expect(result.current.regions).toEqual([]);
-    expect(result.current.error).toBe('Errore di rete. Riprova.');
+    expect(result.current.error).toBe('Network error. Please retry.');
   });
 
   it('should only clear error on successful load', async () => {

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { apiClient } from '../api/client';
 import { ForecastRegion, ForecastLocation } from '../api/types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface MapContextType {
   regions: ForecastRegion[];
@@ -28,6 +29,7 @@ interface MapProviderProps {
 }
 
 export const MapProvider: React.FC<MapProviderProps> = ({ children, onLogout }) => {
+  const { t } = useI18n();
   const [regions, setRegions] = useState<ForecastRegion[]>([]);
   const [mapInstance, setMapInstance] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,14 +56,14 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children, onLogout }) 
         setRegions(result.data);
         setError(null); // Only clear error on success
       } else {
-        setError(result.error || 'Impossibile caricare le località');
+        setError(result.error || t('map.loadError'));
       }
     } catch (err) {
-      setError('Errore di rete. Riprova.');
+      setError(t('map.networkError'));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadForecastLocations();
