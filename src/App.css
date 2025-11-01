@@ -1232,10 +1232,6 @@
     transform: none;
   }
 
-  .external-forecast-link:hover .external-link-icon {
-    color: #999;
-  }
-
   /* Switch to back button when overlay is fullscreen */
   .close-icon-desktop {
     display: none;
