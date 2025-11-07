@@ -69,6 +69,13 @@ export const translations = {
     'account.error': 'Impossibile caricare le informazioni dell\'account',
     'account.retry': 'Riprova',
 
+    // About
+    'about.title': 'Informazioni',
+    'about.forecastSystem': 'Sistema di previsione',
+    'about.forecastCredit': 'Creato e mantenuto da Andrea Barcellona',
+    'about.mapViewer': 'Visualizzatore RASP Map',
+    'about.mapCredit': 'Creato da Rory Stephenson',
+
     // Logout confirmation
     'logout.title': 'Conferma uscita',
     'logout.message': 'Sei sicuro di voler uscire?',
@@ -162,6 +169,13 @@ export const translations = {
     'account.loading': 'Loading account information...',
     'account.error': 'Unable to load account information',
     'account.retry': 'Retry',
+
+    // About
+    'about.title': 'About',
+    'about.forecastSystem': 'Forecast system',
+    'about.forecastCredit': 'Created and maintained by Andrea Barcellona',
+    'about.mapViewer': 'RASP Map Viewer',
+    'about.mapCredit': 'Created by Rory Stephenson',
 
     // Logout confirmation
     'logout.title': 'Confirm Logout',

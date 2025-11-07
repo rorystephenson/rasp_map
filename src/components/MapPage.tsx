@@ -348,6 +348,10 @@ export const MapPage: React.FC<MapPageProps> = ({ onLogout }) => {
                 <img src="/user_icon.svg" alt={t('account.title')} width="18" height="18" />
                 {t('account.title')}
               </button>
+              <button onClick={() => { setLocation('/about'); setIsMenuOpen(false); }} className="menu-item">
+                <img src="/info_icon.svg" alt={t('about.title')} width="18" height="18" />
+                {t('about.title')}
+              </button>
               <button onClick={() => { setLocation('/logout'); setIsMenuOpen(false); }} className="menu-item">
                 <img src="/logout_icon.svg" alt={t('map.logout')} width="18" height="18" />
                 {t('map.logout')}

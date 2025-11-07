@@ -7,6 +7,7 @@ import { SearchOverlay } from './components/SearchOverlay';
 import { FavouritesOverlay } from './components/FavouritesOverlay';
 import { SpotOverlay } from './components/SpotOverlay';
 import { UserAccountOverlay } from './components/UserAccountOverlay';
+import { AboutOverlay } from './components/AboutOverlay';
 import { LogoutConfirmationOverlay } from './components/LogoutConfirmationOverlay';
 import { MapProvider } from './contexts/MapContext';
 import { I18nProvider } from './i18n/I18nContext';
@@ -37,6 +38,7 @@ function AppContent() {
         {route?.name === 'search' && <SearchOverlay />}
         {route?.name === 'favourites' && <FavouritesOverlay />}
         {route?.name === 'user' && <UserAccountOverlay />}
+        {route?.name === 'about' && <AboutOverlay />}
         {route?.name === 'logout' && <LogoutConfirmationOverlay onLogout={handleLogout} />}
 
         {/* Spot overlay (can be accessed from multiple contexts) */}

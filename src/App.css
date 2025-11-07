@@ -1196,6 +1196,35 @@
   color: #00b300 !important;
 }
 
+/* About Overlay */
+.about-content {
+  padding: 1.5rem;
+  min-width: 320px;
+  max-width: 500px;
+}
+
+.about-section {
+  margin-bottom: 1.5rem;
+}
+
+.about-section:last-child {
+  margin-bottom: 0;
+}
+
+.about-section h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.about-section p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.5;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
 
