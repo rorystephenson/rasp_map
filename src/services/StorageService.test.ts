@@ -427,7 +427,6 @@ describe('StorageService', () => {
     it('should not save if existing timestamp is newer (race condition)', () => {
       // Save initial state with current timestamp
       storageService.setMapViewState(validState);
-      const firstSave = storageService.getMapViewState();
 
       // Manually set a future timestamp
       const futureState: MapViewState = {

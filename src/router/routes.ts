@@ -35,6 +35,11 @@ export const routes: RouteDefinition[] = [
     overlay: true,
   },
   {
+    path: '/user',
+    name: 'user',
+    overlay: true,
+  },
+  {
     path: '/logout',
     name: 'logout',
     overlay: true,

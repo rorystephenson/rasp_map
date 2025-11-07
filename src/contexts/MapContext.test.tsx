@@ -142,8 +142,8 @@ describe('MapContext', () => {
 
     await waitFor(() => {
       expect(result.current.error).toBe(null);
-      expect(result.current.regions).toEqual(mockForecastData);
     });
+    expect(result.current.regions).toEqual(mockForecastData);
   });
 
   it('should keep error when retry also fails', async () => {

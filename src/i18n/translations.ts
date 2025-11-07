@@ -59,6 +59,16 @@ export const translations = {
     'day.sun': 'Dom',
     'day.today': 'Oggi',
 
+    // User account
+    'account.title': 'Account',
+    'account.username': 'Username:',
+    'account.accountId': 'ID conto:',
+    'account.creditRemaining': 'Credito res.:',
+    'account.expiryDate': 'Scade il:',
+    'account.loading': 'Caricamento informazioni account...',
+    'account.error': 'Impossibile caricare le informazioni dell\'account',
+    'account.retry': 'Riprova',
+
     // Logout confirmation
     'logout.title': 'Conferma uscita',
     'logout.message': 'Sei sicuro di voler uscire?',
@@ -142,6 +152,16 @@ export const translations = {
     'day.sat': 'Sat',
     'day.sun': 'Sun',
     'day.today': 'Today',
+
+    // User account
+    'account.title': 'Account',
+    'account.username': 'Username:',
+    'account.accountId': 'Account ID:',
+    'account.creditRemaining': 'Credit remaining:',
+    'account.expiryDate': 'Expires:',
+    'account.loading': 'Loading account information...',
+    'account.error': 'Unable to load account information',
+    'account.retry': 'Retry',
 
     // Logout confirmation
     'logout.title': 'Confirm Logout',

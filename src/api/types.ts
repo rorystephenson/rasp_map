@@ -28,3 +28,9 @@ export interface ForecastResponse {
   data?: ForecastRegion[];
   error?: string;
 }
+
+export interface UserAccountResponse {
+  success: boolean;
+  error?: string;
+  rawHtml?: string; // HTML table with account info
+}

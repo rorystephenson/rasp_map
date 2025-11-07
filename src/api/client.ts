@@ -1,4 +1,4 @@
-import { AuthResponse, ForecastResponse, ForecastRegion } from './types';
+import { AuthResponse, ForecastResponse, ForecastRegion, UserAccountResponse } from './types';
 import { storageService } from '../services/StorageService';
 
 const BASE_URL = 'https://www.cumulus.it/php';
@@ -155,6 +155,38 @@ class ApiClient {
     });
 
     return `https://www.cumulus.it/rasp/publicwg.php?${params.toString()}`;
+  }
+
+  async getUserAccount(): Promise<UserAccountResponse> {
+    if (!this.token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    try {
+      const url = `${BASE_URL}/paytest-mobile.php?lang=it&key=${encodeURIComponent(this.token)}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': '*/*',
+          'Origin': REQUEST_ORIGIN,
+        },
+      });
+
+      if (!response.ok) {
+        return { success: false, error: `HTTP ${response.status}: ${response.statusText}` };
+      }
+
+      const html = await response.text();
+
+      // Just return the HTML directly - no parsing needed
+      return { success: true, rawHtml: html };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error'
+      };
+    }
   }
 }
 

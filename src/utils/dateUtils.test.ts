@@ -4,7 +4,6 @@
  */
 
 import {
-  getTodayDateString,
   formatDateToString,
   parseStringToDate,
   getDateForOffset,
