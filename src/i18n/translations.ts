@@ -12,7 +12,7 @@ export const translations = {
 
     // Auth page
     'auth.title': 'RASP Map',
-    'auth.description': 'Inserisci la tua chiave di autenticazione per accedere alle previsioni parapendio',
+    'auth.description': 'Inserisci la tua chiave di autenticazione per accedere ai Windgram per il volo libero',
     'auth.howToGetKey': 'Come ottenere la chiave di accesso',
     'auth.instructions.step1': 'Accedi al sito',
     'auth.instructions.step2': 'Nel menu vai a "Meteo → Consulta il servizio meteo"',
@@ -113,7 +113,7 @@ export const translations = {
 
     // Auth page
     'auth.title': 'RASP Map',
-    'auth.description': 'Enter your authentication key to access paragliding forecasts',
+    'auth.description': 'Enter your authentication key to access Windgrams for sport pilots',
     'auth.howToGetKey': 'How to get your access key',
     'auth.instructions.step1': 'Log in to',
     'auth.instructions.step2': 'In the menu go to "Meteo → Consulta il servizio meteo"',
