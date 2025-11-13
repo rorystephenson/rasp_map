@@ -15,7 +15,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(find:*)",
       "Bash(sed:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "WebFetch(domain:wiki.openstreetmap.org)"
     ],
     "deny": [],
     "ask": []
