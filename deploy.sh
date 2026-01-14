@@ -33,15 +33,25 @@ case "$1" in
         
     infra)
         echo "=== Deploying Infrastructure ==="
+
+        # Check if .env file exists
+        if [ ! -f "infra/.env" ]; then
+            echo "ERROR: infra/.env file not found!"
+            echo "Please create it from infra/.env.example and set your secrets"
+            exit 1
+        fi
+
         echo "Uploading Docker configuration (only if changed)..."
         rsync -avz infra/compose.yaml $SERVER:$APP_DIR/compose.yaml
         rsync -avz infra/nginx.conf $SERVER:$APP_DIR/nginx.conf
-        
+        rsync -avz infra/.env $SERVER:$APP_DIR/.env
+
         echo "Restarting Docker containers..."
         ssh $SERVER "cd $APP_DIR && docker compose down && docker compose up -d"
-        
+
         echo "Infrastructure deployment complete!"
         echo "Site: https://rasp.balanci.ng"
+        echo "Stats: https://stats.rasp.balanci.ng"
         ;;
         
     *)

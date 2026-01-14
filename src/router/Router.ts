@@ -9,6 +9,8 @@
  * - No history pollution when closing overlays
  */
 
+import { trackEvent } from '../analytics/umami';
+
 export interface RouteDefinition {
   path: string;
   name: string;
@@ -143,6 +145,19 @@ export class Router {
     if (!route) {
       console.warn(`No route found for path: ${path}`);
       return;
+    }
+
+    // Track overlay opens for analytics
+    if (route.overlay) {
+      const currentRoute = this.getCurrentRoute();
+      trackEvent({
+        name: 'overlay_open',
+        data: {
+          overlay_type: route.name,
+          spot_id: route.params.id,
+          source: currentRoute?.name,
+        },
+      });
     }
 
     if (options.replace) {

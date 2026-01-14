@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { useI18n } from '../i18n/I18nContext';
+import { trackEvent } from '../analytics/umami';
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
@@ -12,6 +13,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
+
+  // Track auth page view
+  useEffect(() => {
+    trackEvent({ name: 'auth_page_view' });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +33,23 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       const result = await apiClient.authenticate(userKey.trim());
 
       if (result.success) {
+        trackEvent({
+          name: 'login_attempt',
+          data: { success: true },
+        });
         onAuthSuccess();
       } else {
+        trackEvent({
+          name: 'login_attempt',
+          data: { success: false },
+        });
         setError(result.error || t('auth.errorFailed'));
       }
     } catch (err) {
+      trackEvent({
+        name: 'login_attempt',
+        data: { success: false },
+      });
       setError(t('auth.errorNetwork'));
     } finally {
       setIsLoading(false);

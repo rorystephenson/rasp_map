@@ -7,20 +7,22 @@ import { useIsFavourite, toggleFavourite } from '../utils/favourites';
 import { useMapContext } from '../contexts/MapContext';
 import { useI18n } from '../i18n/I18nContext';
 import { Overlay } from './Overlay';
+import { trackEvent } from '../analytics/umami';
 
 interface SearchResultItemProps {
   location: LocationWithRegion;
   onLocationClick: (location: LocationWithRegion) => void;
-  onLocationView: (location: LocationWithRegion) => void;
+  onLocationView: (location: LocationWithRegion, position: number) => void;
+  position: number;
 }
 
-const SearchResultItem: React.FC<SearchResultItemProps> = ({ location, onLocationClick, onLocationView }) => {
+const SearchResultItem: React.FC<SearchResultItemProps> = ({ location, onLocationClick, onLocationView, position }) => {
   const { t } = useI18n();
   const isFavourited = useIsFavourite(location.windgram_id);
 
   const handleToggleFavourite = (e: React.MouseEvent) => {
     e.stopPropagation();
-    toggleFavourite(location.windgram_id);
+    toggleFavourite(location.windgram_id, location.windgram_name);
   };
 
   return (
@@ -46,7 +48,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ location, onLocatio
       </button>
       <button
         className="search-result-view"
-        onClick={() => onLocationView(location)}
+        onClick={() => onLocationView(location, position)}
         title={t('search.viewForecast')}
       >
         <img src="/eye_icon.svg" alt={t('search.viewForecast')} width="20" height="20" />
@@ -94,6 +96,15 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = () => {
     if (query.trim()) {
       const searchResults = searchService.search(query, { maxResults: 20 });
       setResults(searchResults);
+
+      // Track search query
+      trackEvent({
+        name: 'search_query',
+        data: {
+          query_length: query.trim().length,
+          results_count: searchResults.length,
+        },
+      });
     } else {
       setResults([]);
     }
@@ -113,7 +124,16 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = () => {
     // Keep search query for next time
   };
 
-  const handleLocationView = (location: LocationWithRegion) => {
+  const handleLocationView = (location: LocationWithRegion, position: number) => {
+    // Track search result selection
+    trackEvent({
+      name: 'search_result_selected',
+      data: {
+        spot_id: location.windgram_id,
+        position,
+      },
+    });
+
     // Navigate to spot overlay from search context
     setLocation('/search/spot/:id', { params: { id: location.windgram_id } });
   };
@@ -148,12 +168,13 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = () => {
                 {t('search.resultsFound', { count: results.length })}
               </div>
               <div className="search-results-list">
-                {results.map(({ location }) => (
+                {results.map(({ location }, index) => (
                   <SearchResultItem
                     key={location.windgram_id}
                     location={location}
                     onLocationClick={handleLocationClick}
                     onLocationView={handleLocationView}
+                    position={index + 1}
                   />
                 ))}
               </div>

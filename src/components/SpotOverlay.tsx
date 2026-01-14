@@ -5,6 +5,7 @@ import { toggleFavourite, useIsFavourite } from '../utils/favourites';
 import { useI18n } from '../i18n/I18nContext';
 import { Overlay } from './Overlay';
 import { useMapContext } from '../contexts/MapContext';
+import { trackEvent } from '../analytics/umami';
 
 interface SpotOverlayProps {
   windgramId: string;
@@ -105,7 +106,7 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
   const favouriteButton = (
     <button
       className="favourite-toggle"
-      onClick={() => toggleFavourite(windgramId)}
+      onClick={() => toggleFavourite(windgramId, location.windgram_name)}
       title={isFavourited ? t('favourites.remove') : t('favourites.add')}
     >
       <img
@@ -180,6 +181,15 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
               rel="noopener noreferrer"
               className="external-forecast-link"
               title={t('ui.openWindy')}
+              onClick={() => {
+                trackEvent({
+                  name: 'windy_click',
+                  data: {
+                    spot_id: windgramId,
+                    spot_name: location.windgram_name,
+                  },
+                });
+              }}
             >
               <img
                 src="/windy_logo.png"
@@ -195,6 +205,15 @@ export const SpotOverlay: React.FC<SpotOverlayProps> = ({ windgramId }) => {
               rel="noopener noreferrer"
               className="external-forecast-link"
               title={t('ui.openMeteoParapente')}
+              onClick={() => {
+                trackEvent({
+                  name: 'meteo_parapente_click',
+                  data: {
+                    spot_id: windgramId,
+                    spot_name: location.windgram_name,
+                  },
+                });
+              }}
             >
               <img
                 src="/meteo_parapente_logo.png"
